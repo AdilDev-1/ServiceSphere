@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { registerUserSchema, type RegisterUser } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
 
   const form = useForm<RegisterUser>({
     resolver: zodResolver(registerUserSchema),
@@ -43,6 +45,8 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
         title: "Welcome to AutoService Pro!",
         description: "Your account has been created successfully.",
       });
+      // Navigate to dashboard after successful registration
+      navigate("/");
     },
     onError: (error: any) => {
       toast({

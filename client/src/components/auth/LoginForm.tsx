@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { loginUserSchema, type LoginUser } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +20,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
 
   const form = useForm<LoginUser>({
     resolver: zodResolver(loginUserSchema),
@@ -38,6 +40,10 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
         title: "Welcome back!",
         description: "You've successfully signed in to AutoService Pro.",
       });
+      // Navigate to dashboard after successful login
+      navigate("/");
+      // Navigate to dashboard after successful login
+      navigate("/");
     },
     onError: (error: any) => {
       toast({

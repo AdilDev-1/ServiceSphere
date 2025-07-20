@@ -44,7 +44,7 @@ export default function UserSidebar() {
         })}
       </nav>
       <div className="absolute bottom-6 left-6 right-6">
-        <Button onClick={handleLogout} variant="outline" className="w-full justify-start px-4 py-3">
+        <Button onClick={handleLogout} variant="outline" className="justify-start px-4 py-3 min-w-32">
           <LogOut className="w-4 h-4 mr-2" />
           Logout
         </Button>

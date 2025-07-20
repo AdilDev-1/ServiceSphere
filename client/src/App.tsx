@@ -25,52 +25,52 @@ import AdminSettings from "@/pages/admin-settings";
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Switch>
       {/* Public routes */}
       <Route path="/auth" component={AuthPage} />
       
-      {isLoading ? (
-        <Route>
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading...</p>
-            </div>
-          </div>
-        </Route>
-      ) : !isAuthenticated ? (
+      {/* Landing page - always accessible */}
+      <Route path="/" component={AutomotiveLanding} />
+      
+      {/* Admin routes */}
+      {isAuthenticated && user?.role === "admin" && (
         <>
-          <Route path="/" component={AutomotiveLanding} />
-          <Route component={AutomotiveLanding} />
-        </>
-      ) : (
-        <>
-          {user?.role === "admin" ? (
-            <>
-              <Route path="/" component={AdminDashboard} />
-              <Route path="/admin/dashboard" component={AdminDashboard} />
-              <Route path="/admin/submissions" component={AdminSubmissions} />
-              <Route path="/admin/documents" component={AdminDocuments} />
-              <Route path="/admin/services" component={AdminServices} />
-              <Route path="/admin/users" component={AdminUsers} />
-              <Route path="/admin/payments" component={AdminPayments} />
-              <Route path="/admin/messages" component={AdminMessages} />
-              <Route path="/admin/settings" component={AdminSettings} />
-            </>
-          ) : (
-            <>
-              <Route path="/" component={UserDashboard} />
-              <Route path="/dashboard" component={UserDashboard} />
-              <Route path="/submit-request" component={SubmitRequest} />
-              <Route path="/my-submissions" component={MySubmissions} />
-              <Route path="/payments" component={Payments} />
-              <Route path="/profile" component={Profile} />
-              <Route path="/support" component={Support} />
-            </>
-          )}
+          <Route path="/admin" component={AdminDashboard} />
+          <Route path="/admin/dashboard" component={AdminDashboard} />
+          <Route path="/admin/submissions" component={AdminSubmissions} />
+          <Route path="/admin/documents" component={AdminDocuments} />
+          <Route path="/admin/services" component={AdminServices} />
+          <Route path="/admin/users" component={AdminUsers} />
+          <Route path="/admin/payments" component={AdminPayments} />
+          <Route path="/admin/messages" component={AdminMessages} />
+          <Route path="/admin/settings" component={AdminSettings} />
         </>
       )}
+      
+      {/* User routes */}
+      {isAuthenticated && user?.role !== "admin" && (
+        <>
+          <Route path="/dashboard" component={UserDashboard} />
+          <Route path="/submit-request" component={SubmitRequest} />
+          <Route path="/my-submissions" component={MySubmissions} />
+          <Route path="/payments" component={Payments} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/support" component={Support} />
+        </>
+      )}
+      
       <Route component={NotFound} />
     </Switch>
   );

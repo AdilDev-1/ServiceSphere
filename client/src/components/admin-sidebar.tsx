@@ -40,7 +40,7 @@ export default function AdminSidebar() {
       <nav className="mt-6">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location === item.href || (item.href === "/admin" && location === "/admin");
+          const isActive = location === item.href || (item.href === "/admin" && (location === "/admin" || location === "/admin/dashboard"));
           
           return (
             <Link key={item.href} href={item.href}>

@@ -98,7 +98,24 @@ export default function AutomotiveLanding() {
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 rounded-full px-8 font-semibold">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-2 border-white rounded-full px-8 font-semibold"
+                  style={{ 
+                    backgroundColor: 'transparent', 
+                    color: 'white',
+                    borderColor: 'white'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.color = '#2563eb';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                >
                   View Services
                 </Button>
               </div>
@@ -277,7 +294,23 @@ export default function AutomotiveLanding() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 rounded-full px-8 font-semibold">
+              <Button 
+                size="lg" 
+                className="rounded-full px-8 font-semibold"
+                style={{ 
+                  backgroundColor: 'white', 
+                  color: '#2563eb',
+                  border: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#eff6ff';
+                  e.currentTarget.style.color = '#2563eb';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.color = '#2563eb';
+                }}
+              >
                 Create Account
               </Button>
             </Link>

@@ -15,7 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, ArrowRight, CheckCircle, Upload, Calendar, Car } from "lucide-react";
 import { z } from "zod";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
@@ -24,8 +26,14 @@ const requestSchema = z.object({
   serviceTypeId: z.number(),
   title: z.string().min(1, "Title is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  priority: z.enum(["standard", "expedited", "urgent"]),
+  priority: z.enum(["standard", "urgent"]),
   additionalServices: z.array(z.string()),
+  vehicleMake: z.string().min(1, "Vehicle make is required"),
+  vehicleModel: z.string().min(1, "Vehicle model is required"),
+  vehicleYear: z.number().min(1990).max(2025),
+  vehicleVin: z.string().optional(),
+  serviceCategory: z.string().min(1, "Service category is required"),
+  preferredServiceDate: z.string().min(1, "Preferred service date is required"),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
@@ -57,6 +65,8 @@ export default function SubmitRequest() {
     defaultValues: {
       additionalServices: [],
       priority: "standard",
+      vehicleYear: new Date().getFullYear(),
+      vehicleVin: "",
     },
   });
 
@@ -193,174 +203,286 @@ export default function SubmitRequest() {
                     )}
 
                     {currentStep === 2 && (
-                      <div className="space-y-6">
-                        <FormField
-                          control={form.control}
-                          name="serviceTypeId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Service Type *</FormLabel>
-                              <Select onValueChange={(value) => field.onChange(parseInt(value))}>
+                      <div className="space-y-8">
+                        {/* Vehicle Information Section */}
+                        <Card className="border-gray-300">
+                          <CardHeader className="pb-4">
+                            <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                              <Car className="w-5 h-5 mr-2 text-blue-600" />
+                              Vehicle Information
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="vehicleMake"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Vehicle Make *</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        {...field}
+                                        placeholder="e.g., Toyota, Honda, Ford"
+                                        className="w-full"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name="vehicleModel"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Vehicle Model *</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        {...field}
+                                        placeholder="e.g., Camry, Civic, F-150"
+                                        className="w-full"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="vehicleYear"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Model Year *</FormLabel>
+                                    <Select onValueChange={(value) => field.onChange(parseInt(value))}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select year" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {Array.from({ length: 36 }, (_, i) => 2025 - i).map((year) => (
+                                          <SelectItem key={year} value={year.toString()}>
+                                            {year}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name="vehicleVin"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>VIN (Optional)</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        {...field}
+                                        placeholder="17-character VIN"
+                                        maxLength={17}
+                                        className="w-full"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Service Details Section */}
+                        <div className="space-y-6">
+                          <FormField
+                            control={form.control}
+                            name="serviceCategory"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Service Category *</FormLabel>
+                                <Select onValueChange={field.onChange}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select service category..." />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="inspection">Inspection</SelectItem>
+                                    <SelectItem value="title_transfer">Title Transfer</SelectItem>
+                                    <SelectItem value="registration_renewal">Registration Renewal</SelectItem>
+                                    <SelectItem value="mechanical_repair">Mechanical Repair</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="preferredServiceDate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Preferred Service Date *</FormLabel>
                                 <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a service..." />
-                                  </SelectTrigger>
+                                  <div className="relative">
+                                    <Input
+                                      {...field}
+                                      type="date"
+                                      min={new Date().toISOString().split('T')[0]}
+                                      className="w-full pl-10"
+                                    />
+                                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                  </div>
                                 </FormControl>
-                                <SelectContent>
-                                  {serviceTypes?.map((type: any) => (
-                                    <SelectItem key={type.id} value={type.id.toString()}>
-                                      {type.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                        <FormField
-                          control={form.control}
-                          name="title"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Request Title *</FormLabel>
-                              <FormControl>
-                                <input
-                                  {...field}
-                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                                  placeholder="Brief title for your request"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="priority"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Priority Level</FormLabel>
-                              <FormControl>
-                                <RadioGroup
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                  className="grid grid-cols-3 gap-4"
-                                >
-                                  <div className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                                    <RadioGroupItem value="standard" className="mr-3" />
-                                    <div>
-                                      <div className="font-medium">Standard</div>
-                                      <div className="text-xs text-gray-500">5-7 business days</div>
+                          <FormField
+                            control={form.control}
+                            name="priority"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Priority Level</FormLabel>
+                                <FormControl>
+                                  <RadioGroup
+                                    value={field.value}
+                                    onValueChange={field.onChange}
+                                    className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                                  >
+                                    <div className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                                      <RadioGroupItem value="standard" className="mr-3" />
+                                      <div>
+                                        <div className="font-medium">Standard</div>
+                                        <div className="text-xs text-gray-500">5-7 business days</div>
+                                      </div>
                                     </div>
-                                  </div>
-                                  <div className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                                    <RadioGroupItem value="expedited" className="mr-3" />
-                                    <div>
-                                      <div className="font-medium">Expedited</div>
-                                      <div className="text-xs text-gray-500">2-3 business days</div>
+                                    <div className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                                      <RadioGroupItem value="urgent" className="mr-3" />
+                                      <div>
+                                        <div className="font-medium">Urgent</div>
+                                        <div className="text-xs text-gray-500">24-48 hours</div>
+                                      </div>
                                     </div>
-                                  </div>
-                                  <div className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                                    <RadioGroupItem value="urgent" className="mr-3" />
-                                    <div>
-                                      <div className="font-medium">Urgent</div>
-                                      <div className="text-xs text-gray-500">24-48 hours</div>
-                                    </div>
-                                  </div>
-                                </RadioGroup>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                                  </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                        <FormField
-                          control={form.control}
-                          name="description"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Service Description *</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  {...field}
-                                  rows={4}
-                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                                  placeholder="Please describe your service requirements in detail..."
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="additionalServices"
-                          render={() => (
-                            <FormItem>
-                              <FormLabel>Additional Services</FormLabel>
-                              <div className="space-y-2">
-                                {[
-                                  { id: "email", label: "Email notifications for status updates" },
-                                  { id: "sms", label: "SMS notifications for urgent updates" },
-                                  { id: "consultation", label: "Consultation call with specialist" },
-                                ].map((item) => (
-                                  <FormField
-                                    key={item.id}
-                                    control={form.control}
-                                    name="additionalServices"
-                                    render={({ field }) => (
-                                      <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl>
-                                          <Checkbox
-                                            checked={field.value?.includes(item.id)}
-                                            onCheckedChange={(checked) => {
-                                              return checked
-                                                ? field.onChange([...field.value, item.id])
-                                                : field.onChange(
-                                                    field.value?.filter((value) => value !== item.id)
-                                                  );
-                                            }}
-                                          />
-                                        </FormControl>
-                                        <FormLabel className="font-normal">
-                                          {item.label}
-                                        </FormLabel>
-                                      </FormItem>
-                                    )}
+                          <FormField
+                            control={form.control}
+                            name="description"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Additional Description *</FormLabel>
+                                <FormControl>
+                                  <Textarea
+                                    {...field}
+                                    rows={4}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    placeholder="Please describe your service requirements in detail..."
                                   />
-                                ))}
-                              </div>
-                            </FormItem>
-                          )}
-                        />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Document Upload Section */}
+                          <div className="space-y-3">
+                            <Label>Document Upload</Label>
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+                              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                              <p className="text-sm text-gray-600 mb-1">
+                                Drag and drop files here, or <span className="text-blue-600 font-medium cursor-pointer">browse</span>
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Supports PDF, JPG, PNG files up to 10MB each
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
 
                     {currentStep === 3 && (
                       <div className="space-y-6">
                         <p className="text-gray-600">Please review your request details before submitting.</p>
+                        
+                        {/* Vehicle Information Review */}
+                        <Card className="bg-gray-50">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                              <Car className="w-5 h-5 mr-2 text-blue-600" />
+                              Vehicle Information
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                <span className="text-sm font-medium text-gray-700">Vehicle Make:</span>
+                                <p className="text-gray-900">{form.watch("vehicleMake") || "Not specified"}</p>
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium text-gray-700">Vehicle Model:</span>
+                                <p className="text-gray-900">{form.watch("vehicleModel") || "Not specified"}</p>
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium text-gray-700">Model Year:</span>
+                                <p className="text-gray-900">{form.watch("vehicleYear") || "Not specified"}</p>
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium text-gray-700">VIN:</span>
+                                <p className="text-gray-900">{form.watch("vehicleVin") || "Not provided"}</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Service Details Review */}
                         <div className="bg-gray-50 rounded-lg p-6 space-y-4">
                           <div>
-                            <h3 className="font-medium text-gray-900">Request Title</h3>
-                            <p className="text-gray-600">{form.watch("title")}</p>
+                            <h3 className="font-medium text-gray-900">Service Details</h3>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <span className="text-sm font-medium text-gray-700">Service Category:</span>
+                              <p className="text-gray-900 capitalize">{form.watch("serviceCategory")?.replace('_', ' ') || "Not specified"}</p>
+                            </div>
+                            <div>
+                              <span className="text-sm font-medium text-gray-700">Preferred Date:</span>
+                              <p className="text-gray-900">{form.watch("preferredServiceDate") || "Not specified"}</p>
+                            </div>
+                            <div>
+                              <span className="text-sm font-medium text-gray-700">Priority:</span>
+                              <p className="text-gray-900 capitalize">{form.watch("priority")}</p>
+                            </div>
                           </div>
                           <div>
-                            <h3 className="font-medium text-gray-900">Service Type</h3>
-                            <p className="text-gray-600">
-                              {serviceTypes?.find((t: any) => t.id === form.watch("serviceTypeId"))?.name}
-                            </p>
+                            <span className="text-sm font-medium text-gray-700">Description:</span>
+                            <p className="text-gray-900 mt-1">{form.watch("description") || "No description provided"}</p>
+                          </div>
+                        </div>
+
+                        <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+                          <div>
+                            <h3 className="font-medium text-gray-900">Request Summary</h3>
                           </div>
                           <div>
-                            <h3 className="font-medium text-gray-900">Priority</h3>
-                            <p className="text-gray-600 capitalize">{form.watch("priority")}</p>
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900">Description</h3>
-                            <p className="text-gray-600">{form.watch("description")}</p>
+                            <span className="text-sm font-medium text-gray-700">Title:</span>
+                            <p className="text-gray-900">{form.watch("title") || "Not specified"}</p>
                           </div>
                         </div>
                       </div>

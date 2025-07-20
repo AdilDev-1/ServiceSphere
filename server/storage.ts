@@ -5,8 +5,11 @@ import {
   documents,
   payments,
   messages,
+  notifications,
+  workers,
+  contentPages,
   type User,
-  type UpsertUser,
+  type InsertUser,
   type ServiceType,
   type InsertServiceType,
   type ServiceRequest,
@@ -17,274 +20,330 @@ import {
   type InsertPayment,
   type Message,
   type InsertMessage,
+  type Notification,
+  type InsertNotification,
+  type Worker,
+  type InsertWorker,
+  type ContentPage,
+  type InsertContentPage,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, ilike, or, count } from "drizzle-orm";
+import { eq, desc, and, sql, count } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
   // User operations
-  // (IMPORTANT) these user operations are mandatory for Replit Auth.
-  getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
-
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(userData: InsertUser): Promise<User>;
+  updateUser(id: number, userData: Partial<InsertUser>): Promise<User>;
+  getAllUsers(): Promise<User[]>;
+  
   // Service Type operations
   getServiceTypes(): Promise<ServiceType[]>;
   getServiceType(id: number): Promise<ServiceType | undefined>;
-  createServiceType(serviceType: InsertServiceType): Promise<ServiceType>;
-  updateServiceType(id: number, serviceType: Partial<InsertServiceType>): Promise<ServiceType>;
-
+  createServiceType(data: InsertServiceType): Promise<ServiceType>;
+  updateServiceType(id: number, data: Partial<InsertServiceType>): Promise<ServiceType>;
+  deleteServiceType(id: number): Promise<void>;
+  
   // Service Request operations
-  getServiceRequests(userId?: string): Promise<ServiceRequest[]>;
+  getServiceRequests(userId?: number): Promise<ServiceRequest[]>;
   getServiceRequest(id: number): Promise<ServiceRequest | undefined>;
-  createServiceRequest(request: InsertServiceRequest): Promise<ServiceRequest>;
-  updateServiceRequest(id: number, request: Partial<InsertServiceRequest>): Promise<ServiceRequest>;
-  getRequestStats(userId?: string): Promise<{ pending: number; approved: number; rejected: number; total: number }>;
-
+  createServiceRequest(data: InsertServiceRequest): Promise<ServiceRequest>;
+  updateServiceRequest(id: number, data: Partial<InsertServiceRequest>): Promise<ServiceRequest>;
+  getRequestStats(userId?: number): Promise<any>;
+  
   // Document operations
-  getDocuments(requestId: number): Promise<Document[]>;
-  createDocument(document: InsertDocument): Promise<Document>;
-  updateDocument(id: number, document: Partial<InsertDocument>): Promise<Document>;
-
+  getDocuments(requestId?: number): Promise<Document[]>;
+  createDocument(data: InsertDocument): Promise<Document>;
+  updateDocument(id: number, data: Partial<InsertDocument>): Promise<Document>;
+  deleteDocument(id: number): Promise<void>;
+  
   // Payment operations
-  getPayments(userId?: string): Promise<Payment[]>;
+  getPayments(userId?: number): Promise<Payment[]>;
   getPayment(id: number): Promise<Payment | undefined>;
-  createPayment(payment: InsertPayment): Promise<Payment>;
-  updatePayment(id: number, payment: Partial<InsertPayment>): Promise<Payment>;
-
+  createPayment(data: InsertPayment): Promise<Payment>;
+  updatePayment(id: number, data: Partial<InsertPayment>): Promise<Payment>;
+  
   // Message operations
-  getMessages(userId: string): Promise<Message[]>;
-  createMessage(message: InsertMessage): Promise<Message>;
-  markMessageAsRead(id: number): Promise<void>;
+  getMessages(userId?: number): Promise<Message[]>;
+  createMessage(data: InsertMessage): Promise<Message>;
+  updateMessage(id: number, data: Partial<InsertMessage>): Promise<Message>;
+  
+  // Notification operations
+  getNotifications(userId: number): Promise<Notification[]>;
+  createNotification(data: InsertNotification): Promise<Notification>;
+  markNotificationRead(id: number): Promise<void>;
+  
+  // Worker operations
+  getWorkers(): Promise<Worker[]>;
+  getWorker(id: number): Promise<Worker | undefined>;
+  createWorker(data: InsertWorker): Promise<Worker>;
+  updateWorker(id: number, data: Partial<InsertWorker>): Promise<Worker>;
+  
+  // Content management operations
+  getContentPage(pageName: string): Promise<ContentPage | undefined>;
+  updateContentPage(pageName: string, data: Partial<InsertContentPage>): Promise<ContentPage>;
 }
 
 export class DatabaseStorage implements IStorage {
   // User operations
-  // (IMPORTANT) these user operations are mandatory for Replit Auth.
-
-  async getUser(id: string): Promise<User | undefined> {
+  async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(userData).returning();
+    return user;
+  }
+
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User> {
     const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
+      .update(users)
+      .set({ ...userData, updatedAt: new Date() })
+      .where(eq(users.id, id))
       .returning();
     return user;
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
   // Service Type operations
   async getServiceTypes(): Promise<ServiceType[]> {
-    return await db
-      .select()
-      .from(serviceTypes)
+    return db.select().from(serviceTypes)
       .where(eq(serviceTypes.isActive, true))
-      .orderBy(serviceTypes.name);
+      .orderBy(serviceTypes.displayOrder, serviceTypes.name);
   }
 
   async getServiceType(id: number): Promise<ServiceType | undefined> {
-    const [serviceType] = await db
-      .select()
-      .from(serviceTypes)
-      .where(eq(serviceTypes.id, id));
+    const [serviceType] = await db.select().from(serviceTypes).where(eq(serviceTypes.id, id));
     return serviceType;
   }
 
-  async createServiceType(serviceType: InsertServiceType): Promise<ServiceType> {
-    const [created] = await db
-      .insert(serviceTypes)
-      .values(serviceType)
-      .returning();
-    return created;
+  async createServiceType(data: InsertServiceType): Promise<ServiceType> {
+    const [serviceType] = await db.insert(serviceTypes).values(data).returning();
+    return serviceType;
   }
 
-  async updateServiceType(id: number, serviceType: Partial<InsertServiceType>): Promise<ServiceType> {
-    const [updated] = await db
+  async updateServiceType(id: number, data: Partial<InsertServiceType>): Promise<ServiceType> {
+    const [serviceType] = await db
       .update(serviceTypes)
-      .set(serviceType)
+      .set({ ...data, updatedAt: new Date() })
       .where(eq(serviceTypes.id, id))
       .returning();
-    return updated;
+    return serviceType;
+  }
+
+  async deleteServiceType(id: number): Promise<void> {
+    await db.update(serviceTypes)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(serviceTypes.id, id));
   }
 
   // Service Request operations
-  async getServiceRequests(userId?: string): Promise<ServiceRequest[]> {
-    const query = db
-      .select()
-      .from(serviceRequests)
-      .orderBy(desc(serviceRequests.createdAt));
-
-    if (userId) {
-      return await query.where(eq(serviceRequests.userId, userId));
-    }
-    return await query;
-  }
-
-  async getServiceRequest(id: number): Promise<ServiceRequest | undefined> {
-    const [request] = await db
-      .select()
-      .from(serviceRequests)
-      .where(eq(serviceRequests.id, id));
-    return request;
-  }
-
-  async createServiceRequest(request: InsertServiceRequest): Promise<ServiceRequest> {
-    const [created] = await db
-      .insert(serviceRequests)
-      .values(request)
-      .returning();
-    return created;
-  }
-
-  async updateServiceRequest(id: number, request: Partial<InsertServiceRequest>): Promise<ServiceRequest> {
-    const [updated] = await db
-      .update(serviceRequests)
-      .set({
-        ...request,
-        updatedAt: new Date(),
-      })
-      .where(eq(serviceRequests.id, id))
-      .returning();
-    return updated;
-  }
-
-  async getRequestStats(userId?: string): Promise<{ pending: number; approved: number; rejected: number; total: number }> {
-    let query = db
-      .select({
-        status: serviceRequests.status,
-        count: count(),
-      })
-      .from(serviceRequests);
-
+  async getServiceRequests(userId?: number): Promise<ServiceRequest[]> {
+    let query = db.select().from(serviceRequests);
     if (userId) {
       query = query.where(eq(serviceRequests.userId, userId));
     }
+    return query.orderBy(desc(serviceRequests.createdAt));
+  }
 
-    const results = await query.groupBy(serviceRequests.status);
+  async getServiceRequest(id: number): Promise<ServiceRequest | undefined> {
+    const [request] = await db.select().from(serviceRequests).where(eq(serviceRequests.id, id));
+    return request;
+  }
 
-    const stats = {
-      pending: 0,
-      approved: 0,
-      rejected: 0,
-      total: 0,
+  async createServiceRequest(data: InsertServiceRequest): Promise<ServiceRequest> {
+    const [request] = await db.insert(serviceRequests).values(data).returning();
+    return request;
+  }
+
+  async updateServiceRequest(id: number, data: Partial<InsertServiceRequest>): Promise<ServiceRequest> {
+    const [request] = await db
+      .update(serviceRequests)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(serviceRequests.id, id))
+      .returning();
+    return request;
+  }
+
+  async getRequestStats(userId?: number): Promise<any> {
+    let baseQuery = db.select({
+      status: serviceRequests.status,
+      count: count()
+    }).from(serviceRequests);
+    
+    if (userId) {
+      baseQuery = baseQuery.where(eq(serviceRequests.userId, userId));
+    }
+    
+    const stats = await baseQuery.groupBy(serviceRequests.status);
+    
+    const result = stats.reduce((acc, stat) => {
+      acc[stat.status] = stat.count;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      pending: result.pending || 0,
+      approved: result.approved || 0,
+      in_progress: result.in_progress || 0,
+      completed: result.completed || 0,
+      rejected: result.rejected || 0,
+      total: Object.values(result).reduce((sum, count) => sum + count, 0)
     };
-
-    results.forEach((result) => {
-      const statusCount = Number(result.count);
-      stats.total += statusCount;
-      
-      if (result.status === "pending") {
-        stats.pending = statusCount;
-      } else if (result.status === "approved") {
-        stats.approved = statusCount;
-      } else if (result.status === "rejected") {
-        stats.rejected = statusCount;
-      }
-    });
-
-    return stats;
   }
 
   // Document operations
-  async getDocuments(requestId: number): Promise<Document[]> {
-    return await db
-      .select()
-      .from(documents)
-      .where(eq(documents.requestId, requestId))
-      .orderBy(documents.uploadedAt);
+  async getDocuments(requestId?: number): Promise<Document[]> {
+    let query = db.select().from(documents);
+    if (requestId) {
+      query = query.where(eq(documents.requestId, requestId));
+    }
+    return query.orderBy(desc(documents.uploadedAt));
   }
 
-  async createDocument(document: InsertDocument): Promise<Document> {
-    const [created] = await db
-      .insert(documents)
-      .values(document)
-      .returning();
-    return created;
+  async createDocument(data: InsertDocument): Promise<Document> {
+    const [document] = await db.insert(documents).values(data).returning();
+    return document;
   }
 
-  async updateDocument(id: number, document: Partial<InsertDocument>): Promise<Document> {
-    const [updated] = await db
+  async updateDocument(id: number, data: Partial<InsertDocument>): Promise<Document> {
+    const [document] = await db
       .update(documents)
-      .set(document)
+      .set(data)
       .where(eq(documents.id, id))
       .returning();
-    return updated;
+    return document;
+  }
+
+  async deleteDocument(id: number): Promise<void> {
+    await db.delete(documents).where(eq(documents.id, id));
   }
 
   // Payment operations
-  async getPayments(userId?: string): Promise<Payment[]> {
-    const query = db
-      .select()
-      .from(payments)
-      .orderBy(desc(payments.createdAt));
-
+  async getPayments(userId?: number): Promise<Payment[]> {
+    let query = db.select().from(payments);
     if (userId) {
-      return await query.where(eq(payments.userId, userId));
+      query = query.where(eq(payments.userId, userId));
     }
-    return await query;
+    return query.orderBy(desc(payments.createdAt));
   }
 
   async getPayment(id: number): Promise<Payment | undefined> {
-    const [payment] = await db
-      .select()
-      .from(payments)
-      .where(eq(payments.id, id));
+    const [payment] = await db.select().from(payments).where(eq(payments.id, id));
     return payment;
   }
 
-  async createPayment(payment: InsertPayment): Promise<Payment> {
-    const [created] = await db
-      .insert(payments)
-      .values(payment)
-      .returning();
-    return created;
+  async createPayment(data: InsertPayment): Promise<Payment> {
+    const [payment] = await db.insert(payments).values(data).returning();
+    return payment;
   }
 
-  async updatePayment(id: number, payment: Partial<InsertPayment>): Promise<Payment> {
-    const [updated] = await db
+  async updatePayment(id: number, data: Partial<InsertPayment>): Promise<Payment> {
+    const [payment] = await db
       .update(payments)
-      .set(payment)
+      .set({ ...data, updatedAt: new Date() })
       .where(eq(payments.id, id))
       .returning();
-    return updated;
+    return payment;
   }
 
   // Message operations
-  async getMessages(userId: string): Promise<Message[]> {
-    return await db
-      .select()
-      .from(messages)
-      .where(
-        or(
-          eq(messages.fromUserId, userId),
-          eq(messages.toUserId, userId)
-        )
-      )
-      .orderBy(desc(messages.createdAt));
+  async getMessages(userId?: number): Promise<Message[]> {
+    let query = db.select().from(messages);
+    if (userId) {
+      query = query.where(
+        sql`${messages.fromUserId} = ${userId} OR ${messages.toUserId} = ${userId}`
+      );
+    }
+    return query.orderBy(desc(messages.createdAt));
   }
 
-  async createMessage(message: InsertMessage): Promise<Message> {
-    const [created] = await db
-      .insert(messages)
-      .values(message)
-      .returning();
-    return created;
+  async createMessage(data: InsertMessage): Promise<Message> {
+    const [message] = await db.insert(messages).values(data).returning();
+    return message;
   }
 
-  async markMessageAsRead(id: number): Promise<void> {
-    await db
+  async updateMessage(id: number, data: Partial<InsertMessage>): Promise<Message> {
+    const [message] = await db
       .update(messages)
+      .set(data)
+      .where(eq(messages.id, id))
+      .returning();
+    return message;
+  }
+
+  // Notification operations
+  async getNotifications(userId: number): Promise<Notification[]> {
+    return db.select().from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async createNotification(data: InsertNotification): Promise<Notification> {
+    const [notification] = await db.insert(notifications).values(data).returning();
+    return notification;
+  }
+
+  async markNotificationRead(id: number): Promise<void> {
+    await db.update(notifications)
       .set({ isRead: true })
-      .where(eq(messages.id, id));
+      .where(eq(notifications.id, id));
+  }
+
+  // Worker operations
+  async getWorkers(): Promise<Worker[]> {
+    return db.select().from(workers)
+      .where(eq(workers.isActive, true))
+      .orderBy(workers.specialization);
+  }
+
+  async getWorker(id: number): Promise<Worker | undefined> {
+    const [worker] = await db.select().from(workers).where(eq(workers.id, id));
+    return worker;
+  }
+
+  async createWorker(data: InsertWorker): Promise<Worker> {
+    const [worker] = await db.insert(workers).values(data).returning();
+    return worker;
+  }
+
+  async updateWorker(id: number, data: Partial<InsertWorker>): Promise<Worker> {
+    const [worker] = await db
+      .update(workers)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(workers.id, id))
+      .returning();
+    return worker;
+  }
+
+  // Content management operations
+  async getContentPage(pageName: string): Promise<ContentPage | undefined> {
+    const [page] = await db.select().from(contentPages)
+      .where(and(eq(contentPages.pageName, pageName), eq(contentPages.isActive, true)));
+    return page;
+  }
+
+  async updateContentPage(pageName: string, data: Partial<InsertContentPage>): Promise<ContentPage> {
+    const [page] = await db
+      .insert(contentPages)
+      .values({ ...data, pageName })
+      .onConflictDoUpdate({
+        target: contentPages.pageName,
+        set: { ...data, updatedAt: new Date() }
+      })
+      .returning();
+    return page;
   }
 }
 

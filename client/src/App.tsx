@@ -4,9 +4,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
+import AutomotiveLanding from "@/pages/automotive-landing";
+import AuthPage from "@/pages/auth";
 import UserDashboard from "@/pages/user-dashboard";
+import NotFound from "@/pages/not-found";
 import SubmitRequest from "@/pages/submit-request";
 import MySubmissions from "@/pages/my-submissions";
 import Payments from "@/pages/payments";
@@ -25,8 +26,23 @@ function Router() {
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
+      {/* Public routes */}
+      <Route path="/auth" component={AuthPage} />
+      
+      {isLoading ? (
+        <Route>
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading...</p>
+            </div>
+          </div>
+        </Route>
+      ) : !isAuthenticated ? (
+        <>
+          <Route path="/" component={AutomotiveLanding} />
+          <Route component={AutomotiveLanding} />
+        </>
       ) : (
         <>
           {user?.role === "admin" ? (

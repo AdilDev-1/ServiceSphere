@@ -98,7 +98,7 @@ export default function AutomotiveLanding() {
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 rounded-full px-8">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 rounded-full px-8 font-semibold">
                   View Services
                 </Button>
               </div>
@@ -277,7 +277,7 @@ export default function AutomotiveLanding() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 rounded-full px-8">
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 rounded-full px-8 font-semibold">
                 Create Account
               </Button>
             </Link>

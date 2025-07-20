@@ -68,17 +68,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Hash password and create user
       const hashedPassword = await hashPassword(validatedData.password);
-      const userData = {
-        ...validatedData,
+      const { confirmPassword, ...userData } = validatedData;
+      const userWithHashedPassword = {
+        ...userData,
         password: hashedPassword,
       };
-      delete userData.confirmPassword;
 
-      const user = await storage.createUser(userData);
+      const user = await storage.createUser(userWithHashedPassword);
       req.session.userId = user.id;
       
       // Remove password from response
-      const { password, ...userResponse } = user;
+      const { password: _, ...userResponse } = user;
       res.json(userResponse);
     } catch (error) {
       console.error("Registration error:", error);
@@ -114,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = user.id;
       
       // Remove password from response
-      const { password, ...userResponse } = user;
+      const { password: _, ...userResponse } = user;
       res.json(userResponse);
     } catch (error) {
       console.error("Login error:", error);
@@ -134,7 +134,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/auth/user', isAuthenticated, async (req, res) => {
     try {
-      const { password, ...userResponse } = req.user!;
+      const user = req.user!;
+      const { password, ...userResponse } = user;
       res.json(userResponse);
     } catch (error) {
       console.error("Error fetching user:", error);

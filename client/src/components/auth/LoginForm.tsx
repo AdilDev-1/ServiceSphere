@@ -34,16 +34,18 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
     mutationFn: async (data: LoginUser) => {
       return apiRequest("POST", "/api/auth/login", data);
     },
-    onSuccess: () => {
+    onSuccess: (userData: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: "Welcome back!",
         description: "You've successfully signed in to AutoService Pro.",
       });
-      // Navigate to dashboard after successful login
-      navigate("/");
-      // Navigate to dashboard after successful login
-      navigate("/");
+      // Navigate to appropriate dashboard based on user role
+      if (userData.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     },
     onError: (error: any) => {
       toast({

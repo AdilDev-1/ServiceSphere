@@ -1,12 +1,21 @@
-# ServiceFlow - Service Request Management Platform
+# AutoService Pro - Automotive Service Management Platform  
 
 ## Overview
 
-ServiceFlow is a full-stack web application that enables users to submit service requests through structured forms, upload documents, and make payments after approval. The platform features separate user and admin interfaces with comprehensive request management, document handling, and payment processing capabilities.
+AutoService Pro is a comprehensive automotive service management web application that enables customers to book automotive services, submit service requests, and manage their vehicle maintenance needs. The platform features separate user and admin interfaces with role-based access control, advanced authentication flows, and comprehensive service management capabilities.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+## Recent Changes (July 2025)
+
+✓ Implemented separated authentication flows for users and admins
+✓ Added AdminProtectedRoute component for secure admin access control  
+✓ Created dedicated admin login page at /admin-login with distinct dark theme
+✓ Updated user login flow to redirect to /dashboard instead of landing page
+✓ Admin routes now require admin credentials and role verification
+✓ Fixed button text visibility issues on landing page using inline styles
 
 ## System Architecture
 

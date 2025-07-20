@@ -21,6 +21,8 @@ import AdminUsers from "@/pages/admin-users";
 import AdminPayments from "@/pages/admin-payments";
 import AdminMessages from "@/pages/admin-messages";
 import AdminSettings from "@/pages/admin-settings";
+import AdminLoginPage from "@/pages/admin-login";
+import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -40,24 +42,57 @@ function Router() {
     <Switch>
       {/* Public routes */}
       <Route path="/auth" component={AuthPage} />
+      <Route path="/admin-login" component={AdminLoginPage} />
       
       {/* Landing page - always accessible */}
       <Route path="/" component={AutomotiveLanding} />
       
-      {/* Admin routes */}
-      {isAuthenticated && user?.role === "admin" && (
-        <>
-          <Route path="/admin" component={AdminDashboard} />
-          <Route path="/admin/dashboard" component={AdminDashboard} />
-          <Route path="/admin/submissions" component={AdminSubmissions} />
-          <Route path="/admin/documents" component={AdminDocuments} />
-          <Route path="/admin/services" component={AdminServices} />
-          <Route path="/admin/users" component={AdminUsers} />
-          <Route path="/admin/payments" component={AdminPayments} />
-          <Route path="/admin/messages" component={AdminMessages} />
-          <Route path="/admin/settings" component={AdminSettings} />
-        </>
-      )}
+      {/* Admin routes - Protected */}
+      <Route path="/admin">
+        <AdminProtectedRoute>
+          <AdminDashboard />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/dashboard">
+        <AdminProtectedRoute>
+          <AdminDashboard />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/submissions">
+        <AdminProtectedRoute>
+          <AdminSubmissions />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/documents">
+        <AdminProtectedRoute>
+          <AdminDocuments />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/services">
+        <AdminProtectedRoute>
+          <AdminServices />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/users">
+        <AdminProtectedRoute>
+          <AdminUsers />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/payments">
+        <AdminProtectedRoute>
+          <AdminPayments />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/messages">
+        <AdminProtectedRoute>
+          <AdminMessages />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/settings">
+        <AdminProtectedRoute>
+          <AdminSettings />
+        </AdminProtectedRoute>
+      </Route>
       
       {/* User routes */}
       {isAuthenticated && user?.role !== "admin" && (

@@ -1,16 +1,9 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Car, Wrench, Clock, Shield, Star, ArrowRight, CheckCircle, Phone, Mail, MapPin, Settings, LogOut } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { Car, Wrench, Clock, Shield, Star, ArrowRight, CheckCircle, Phone, Mail, MapPin } from "lucide-react";
 
 export default function AutomotiveLanding() {
-  const { isAuthenticated, user } = useAuth();
-
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
-  };
-
   const services = [
     {
       icon: <Wrench className="w-8 h-8 text-blue-600" />,
@@ -67,57 +60,16 @@ export default function AutomotiveLanding() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              {isAuthenticated ? (
-                <>
-                  {user?.role === "admin" ? (
-                    <>
-                      <Link href="/admin">
-                        <Button variant="outline" className="rounded-full">
-                          <Settings className="w-4 h-4 mr-2" />
-                          Admin Panel
-                        </Button>
-                      </Link>
-                      <Button 
-                        variant="ghost" 
-                        onClick={handleLogout} 
-                        className="rounded-full text-gray-600 hover:text-gray-900"
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Logout
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Link href="/dashboard">
-                        <Button variant="outline" className="rounded-full">
-                          Dashboard
-                        </Button>
-                      </Link>
-                      <Button 
-                        variant="ghost" 
-                        onClick={handleLogout} 
-                        className="rounded-full text-gray-600 hover:text-gray-900"
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Logout
-                      </Button>
-                    </>
-                  )}
-                </>
-              ) : (
-                <>
-                  <Link href="/auth">
-                    <Button variant="outline" className="rounded-full">
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Link href="/auth">
-                    <Button className="bg-blue-600 hover:bg-blue-700 rounded-full">
-                      Get Started
-                    </Button>
-                  </Link>
-                </>
-              )}
+              <Link href="/auth">
+                <Button variant="outline" className="rounded-full">
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/auth">
+                <Button className="bg-blue-600 hover:bg-blue-700 rounded-full">
+                  Get Started
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

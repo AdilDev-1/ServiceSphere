@@ -1,0 +1,161 @@
+Design a full responsive UI layout for a web platform that allows users to submit service requests through structured forms and documents, then make payments after approval. This is not a car selling site — it is a CRM-style service platform. Build both user-facing and admin-facing screens. Use a clean, modern look with neutral colors and icons.
+
+⚠️ Important: Do not include any backend logic, backend-related components, or functional workflows. Focus strictly on visual UI/UX mockups only. This project is for frontend design in Figma only
+
+I want this as a fully visual UI prototype (not coded yet), like a mockup in Figma.
+
+Here’s the detailed UI structure and flow:
+
+👤 USER SIDE SCREENS (Logged-in End Users)
+
+Welcome Screen / Hero Page:
+
+Title: "Submit Your Request with Confidence"
+
+Button: “Login” and “Register”
+
+Quick overview (3-step): Fill Form → Upload Docs → Pay
+
+User Dashboard:
+
+Sidebar with menu:
+
+Home
+
+Submit New Request
+
+My Submissions (View Status)
+
+Payments
+
+Messages/Support
+
+Profile Settings
+
+Dashboard summary cards (e.g., "2 Requests Pending", "1 Approved", "Total Payments")
+
+Submit New Request Screen:
+
+Step-by-step form wizard (3 steps):
+
+Personal Information (Name, Email, Contact)
+
+Service Details (Dropdowns, Checkboxes, Text fields)
+
+Document Upload (Drag & Drop or browse button)
+
+"Submit Request" button (disabled until all fields validated)
+
+Upload Documents Screen:
+
+List of required documents (editable by admin)
+
+Upload field per document (PDF, DOC, JPG allowed)
+
+Progress bar
+
+“All docs uploaded!” confirmation message
+
+Payment Page:
+
+Show Approved Request Details
+
+Payment summary card
+
+Payment method selection (card, bank, PayPal)
+
+“Proceed to Pay” button
+
+My Submissions Page:
+
+Table or card view of all submissions
+
+Status badges: Pending, Approved, Rejected
+
+Filter by date/status
+
+View details option per request
+
+Support / Chat Page:
+
+Message support team
+
+Track ticket status
+
+Optional live chat widget
+
+Profile & Settings:
+
+Update password
+
+Personal info
+
+Notification preferences
+
+🛠️ ADMIN SIDE SCREENS (Staff Panel)
+
+Admin Login
+
+Admin Dashboard:
+
+Overview cards: Total Requests, Payments Collected, Docs Pending Review
+
+Recent activity feed
+
+Quick Actions (Approve, Reject, Contact User)
+
+View All Submissions:
+
+Table with filters (status, date, user name)
+
+View request → Approve/Reject + Notes section
+
+Document Review Panel:
+
+View each uploaded document (click to enlarge)
+
+“Verified” or “Invalid” toggle
+
+Request re-upload from user if needed
+
+Manage Services/Forms:
+
+Admin can edit services available
+
+Define required documents per service
+
+Add/edit questions in request form
+
+Payment History:
+
+View transactions
+
+Filter by user/date/status
+
+Export as CSV
+
+User Management:
+
+List of all users
+
+Block/Delete option
+
+View user's submission/payment history
+
+Message Center:
+
+Communicate with users
+
+Internal notifications
+
+🎯 Design Guidelines:
+
+Mobile-first approach, fully responsive
+
+Subtle transitions and UI animations
+
+Clean typography and accessible contrast
+
+Consistent layout with headers, CTAs, and UI patterns
+
+Visual separation between User vs Admin areas

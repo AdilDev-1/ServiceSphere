@@ -1,24 +1,27 @@
 import { Link, useLocation } from "wouter";
 import { 
-  BarChart3, 
-  List, 
-  FileText, 
-  Settings, 
-  TrendingUp, 
+  LayoutDashboard, 
   Users, 
-  MessageSquare,
-  LogOut
+  FileText, 
+  CreditCard, 
+  MessageSquare, 
+  Settings, 
+  LogOut,
+  Wrench,
+  FolderOpen,
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const menuItems = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
-  { href: "/admin/submissions", label: "All Submissions", icon: List },
-  { href: "/admin/documents", label: "Document Review", icon: FileText },
-  { href: "/admin/services", label: "Manage Services", icon: Settings },
-  { href: "/admin/payments", label: "Payment History", icon: TrendingUp },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/submissions", label: "Submissions", icon: FileText },
   { href: "/admin/users", label: "User Management", icon: Users },
-  { href: "/admin/messages", label: "Message Center", icon: MessageSquare },
+  { href: "/admin/payments", label: "Payments & Invoices", icon: CreditCard },
+  { href: "/admin/services", label: "Service Management", icon: Wrench },
+  { href: "/admin/documents", label: "Document Management", icon: FolderOpen },
+  { href: "/admin/messages", label: "Messages & CRM", icon: MessageSquare },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AdminSidebar() {
@@ -29,22 +32,22 @@ export default function AdminSidebar() {
   };
 
   return (
-    <div className="w-64 bg-gray-900 text-white">
+    <div className="w-64 bg-gray-900 text-white min-h-screen">
       <div className="p-6 border-b border-gray-700">
-        <h2 className="text-xl font-bold">ServiceFlow</h2>
-        <p className="text-sm text-gray-400">Admin Panel</p>
+        <h2 className="text-xl font-bold text-white">AutoService Pro</h2>
+        <p className="text-sm text-gray-300">Admin Panel</p>
       </div>
       <nav className="mt-6">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location === item.href || (item.href === "/admin/dashboard" && location === "/");
+          const isActive = location === item.href || (item.href === "/admin" && location === "/admin");
           
           return (
             <Link key={item.href} href={item.href}>
               <a className={`flex items-center px-6 py-3 transition-colors ${
                 isActive
-                  ? "text-white bg-gray-800 border-r-2 border-primary"
-                  : "text-gray-300 hover:bg-gray-800"
+                  ? "text-blue-400 bg-gray-800 border-r-2 border-blue-400"
+                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
               }`}>
                 <Icon className="w-5 h-5 mr-3" />
                 {item.label}
@@ -54,7 +57,7 @@ export default function AdminSidebar() {
         })}
       </nav>
       <div className="absolute bottom-6 left-6 right-6">
-        <Button onClick={handleLogout} variant="outline" className="w-full bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800">
+        <Button onClick={handleLogout} variant="outline" className="justify-start px-4 py-3 min-w-32 text-gray-300 border-gray-600 hover:bg-gray-800 hover:text-white">
           <LogOut className="w-4 h-4 mr-2" />
           Logout
         </Button>

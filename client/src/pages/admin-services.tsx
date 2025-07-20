@@ -1,379 +1,651 @@
-import { useEffect, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import { apiRequest } from "@/lib/queryClient";
+import { useState } from "react";
 import AdminSidebar from "@/components/admin-sidebar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import { z } from "zod";
-
-const serviceTypeSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
-  basePrice: z.string().min(1, "Base price is required"),
-  processingTime: z.string().min(1, "Processing time is required"),
-  requiredDocuments: z.array(z.string()).default([]),
-  isActive: z.boolean().default(true),
-});
-
-type ServiceTypeFormData = z.infer<typeof serviceTypeSchema>;
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { 
+  Search, 
+  Filter, 
+  Eye, 
+  Edit, 
+  Plus,
+  Trash2,
+  Wrench,
+  DollarSign,
+  Clock,
+  Upload,
+  Settings,
+  Car,
+  AlertCircle
+} from "lucide-react";
 
 export default function AdminServices() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [showCreateService, setShowCreateService] = useState(false);
+  const [showEditService, setShowEditService] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [documentInput, setDocumentInput] = useState("");
-  
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const [newService, setNewService] = useState({
+    name: "",
+    description: "",
+    category: "",
+    basePrice: "",
+    estimatedTime: "",
+    requiredDocuments: [],
+    isActive: true,
+    displayOrder: 0
+  });
 
-  // Redirect if not admin
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || user?.role !== "admin")) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to access this area.",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 500);
-      return;
+  // Mock data - replace with real API calls later
+  const services = [
+    {
+      id: 1,
+      name: "Brake Inspection",
+      description: "Comprehensive brake system inspection including pads, rotors, fluid levels, and performance testing",
+      category: "Safety Inspection",
+      basePrice: 89.99,
+      estimatedTime: "1-2 hours",
+      requiredDocuments: ["Vehicle Registration", "Previous Inspection Report"],
+      serviceImage: null,
+      isActive: true,
+      displayOrder: 1,
+      createdAt: "2024-01-10",
+      totalRequests: 24,
+      avgRating: 4.8
+    },
+    {
+      id: 2,
+      name: "Oil Change Service",
+      description: "Complete oil and filter change service with multi-point inspection",
+      category: "Maintenance",
+      basePrice: 49.99,
+      estimatedTime: "30-45 minutes",
+      requiredDocuments: ["Vehicle Registration"],
+      serviceImage: null,
+      isActive: true,
+      displayOrder: 2,
+      createdAt: "2024-01-10",
+      totalRequests: 45,
+      avgRating: 4.9
+    },
+    {
+      id: 3,
+      name: "Transmission Repair",
+      description: "Diagnostic and repair services for automatic and manual transmissions",
+      category: "Repair",
+      basePrice: 299.99,
+      estimatedTime: "4-6 hours",
+      requiredDocuments: ["Vehicle Registration", "Diagnostic Report", "Warranty Information"],
+      serviceImage: null,
+      isActive: true,
+      displayOrder: 3,
+      createdAt: "2024-01-08",
+      totalRequests: 12,
+      avgRating: 4.7
+    },
+    {
+      id: 4,
+      name: "Annual Safety Inspection",
+      description: "State-required annual vehicle safety inspection covering all major systems",
+      category: "Safety Inspection",
+      basePrice: 25.00,
+      estimatedTime: "45 minutes",
+      requiredDocuments: ["Vehicle Registration", "Insurance Card", "Previous Inspection"],
+      serviceImage: null,
+      isActive: true,
+      displayOrder: 4,
+      createdAt: "2024-01-05",
+      totalRequests: 67,
+      avgRating: 4.6
+    },
+    {
+      id: 5,
+      name: "Engine Diagnostic",
+      description: "Advanced computer diagnostic to identify engine performance issues",
+      category: "Diagnostic",
+      basePrice: 129.99,
+      estimatedTime: "1-2 hours",
+      requiredDocuments: ["Vehicle Registration"],
+      serviceImage: null,
+      isActive: false,
+      displayOrder: 5,
+      createdAt: "2024-01-03",
+      totalRequests: 8,
+      avgRating: 4.5
     }
-  }, [isAuthenticated, user, isLoading, toast]);
+  ];
 
-  const form = useForm<ServiceTypeFormData>({
-    resolver: zodResolver(serviceTypeSchema),
-    defaultValues: {
+  const categories = ["Safety Inspection", "Maintenance", "Repair", "Diagnostic", "Custom"];
+
+  const filteredServices = services.filter(service => {
+    const matchesSearch = 
+      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.category.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = categoryFilter === "all" || service.category === categoryFilter;
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "active" && service.isActive) ||
+      (statusFilter === "inactive" && !service.isActive);
+    
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  const createService = () => {
+    // API call would go here
+    console.log("Creating service:", newService);
+    setShowCreateService(false);
+    setNewService({
+      name: "",
+      description: "",
+      category: "",
+      basePrice: "",
+      estimatedTime: "",
       requiredDocuments: [],
       isActive: true,
-    },
-  });
-
-  const { data: services, isLoading: servicesLoading, error } = useQuery({
-    queryKey: ["/api/service-types"],
-    enabled: isAuthenticated && user?.role === "admin",
-  });
-
-  const createServiceMutation = useMutation({
-    mutationFn: async (data: ServiceTypeFormData) => {
-      const response = await apiRequest("POST", "/api/service-types", data);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Service type created successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/service-types"] });
-      form.reset();
-      setSelectedService(null);
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to create service type",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateServiceMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: ServiceTypeFormData }) => {
-      const response = await apiRequest("PATCH", `/api/service-types/${id}`, data);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Service type updated successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/service-types"] });
-      form.reset();
-      setSelectedService(null);
-      setIsEditMode(false);
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to update service type",
-        variant: "destructive",
-      });
-    },
-  });
-
-  if (!isAuthenticated || isLoading || user?.role !== "admin") {
-    return null;
-  }
-
-  if (error && isUnauthorizedError(error)) {
-    return null;
-  }
-
-  const onSubmit = (data: ServiceTypeFormData) => {
-    if (isEditMode && selectedService) {
-      updateServiceMutation.mutate({ id: selectedService.id, data });
-    } else {
-      createServiceMutation.mutate(data);
-    }
-  };
-
-  const handleEdit = (service: any) => {
-    setSelectedService(service);
-    setIsEditMode(true);
-    form.reset({
-      name: service.name,
-      description: service.description,
-      basePrice: service.basePrice,
-      processingTime: service.processingTime,
-      requiredDocuments: service.requiredDocuments || [],
-      isActive: service.isActive,
+      displayOrder: 0
     });
   };
 
-  const handleAddDocument = () => {
-    if (documentInput.trim()) {
-      const currentDocuments = form.getValues("requiredDocuments");
-      form.setValue("requiredDocuments", [...currentDocuments, documentInput.trim()]);
-      setDocumentInput("");
+  const updateService = (serviceId: number, updates: any) => {
+    // API call would go here
+    console.log(`Updating service ${serviceId}:`, updates);
+    setShowEditService(false);
+    setSelectedService(null);
+  };
+
+  const toggleServiceStatus = (serviceId: number) => {
+    // API call would go here
+    console.log(`Toggling status for service ${serviceId}`);
+  };
+
+  const deleteService = (serviceId: number) => {
+    // API call would go here
+    if (window.confirm("Are you sure you want to delete this service?")) {
+      console.log(`Deleting service ${serviceId}`);
     }
   };
 
-  const handleRemoveDocument = (index: number) => {
-    const currentDocuments = form.getValues("requiredDocuments");
-    const newDocuments = currentDocuments.filter((_, i) => i !== index);
-    form.setValue("requiredDocuments", newDocuments);
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
   };
 
-  const resetForm = () => {
-    form.reset();
-    setSelectedService(null);
-    setIsEditMode(false);
-    setDocumentInput("");
+  const addDocument = (newDoc: string) => {
+    if (newDoc && !newService.requiredDocuments.includes(newDoc)) {
+      setNewService(prev => ({
+        ...prev,
+        requiredDocuments: [...prev.requiredDocuments, newDoc]
+      }));
+    }
   };
+
+  const removeDocument = (docToRemove: string) => {
+    setNewService(prev => ({
+      ...prev,
+      requiredDocuments: prev.requiredDocuments.filter(doc => doc !== docToRemove)
+    }));
+  };
+
+  const totalActiveServices = services.filter(s => s.isActive).length;
+  const totalRequests = services.reduce((sum, s) => sum + s.totalRequests, 0);
+  const avgPrice = services.reduce((sum, s) => sum + s.basePrice, 0) / services.length;
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />
-      
-      <div className="flex-1 overflow-auto">
-        <div className="min-h-screen bg-gray-50 py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Manage Services</CardTitle>
-                    <p className="text-gray-600 mt-1">Configure available services and their requirements</p>
-                  </div>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button onClick={resetForm}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Service
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle>
-                          {isEditMode ? "Edit Service Type" : "Add New Service Type"}
-                        </DialogTitle>
-                      </DialogHeader>
-                      <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                          <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Service Name *</FormLabel>
-                                <FormControl>
-                                  <Input {...field} placeholder="e.g., Business License Application" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Description *</FormLabel>
-                                <FormControl>
-                                  <Textarea {...field} placeholder="Describe what this service provides..." />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="basePrice"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Base Price (USD) *</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="200.00" type="number" step="0.01" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={form.control}
-                              name="processingTime"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Processing Time *</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="5-7 business days" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-
-                          <div>
-                            <FormLabel>Required Documents</FormLabel>
-                            <div className="mt-2 space-y-2">
-                              <div className="flex gap-2">
-                                <Input
-                                  value={documentInput}
-                                  onChange={(e) => setDocumentInput(e.target.value)}
-                                  placeholder="Add required document..."
-                                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddDocument())}
-                                />
-                                <Button type="button" onClick={handleAddDocument} variant="outline">
-                                  Add
-                                </Button>
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {form.watch("requiredDocuments").map((doc, index) => (
-                                  <Badge key={index} variant="secondary" className="cursor-pointer" onClick={() => handleRemoveDocument(index)}>
-                                    {doc} ×
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-
-                          <FormField
-                            control={form.control}
-                            name="isActive"
-                            render={({ field }) => (
-                              <FormItem className="flex items-center justify-between">
-                                <FormLabel>Active Service</FormLabel>
-                                <FormControl>
-                                  <Switch checked={field.value} onCheckedChange={field.onChange} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-
-                          <div className="flex justify-end space-x-3">
-                            <Button type="button" variant="outline" onClick={resetForm}>
-                              Cancel
-                            </Button>
-                            <Button type="submit" disabled={createServiceMutation.isPending || updateServiceMutation.isPending}>
-                              {isEditMode ? "Update Service" : "Create Service"}
-                            </Button>
-                          </div>
-                        </form>
-                      </Form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                {servicesLoading ? (
-                  <p>Loading...</p>
-                ) : services && services.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Service Name</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Base Price</TableHead>
-                        <TableHead>Processing Time</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {services.map((service: any) => (
-                        <TableRow key={service.id}>
-                          <TableCell className="font-medium">{service.name}</TableCell>
-                          <TableCell className="max-w-xs truncate">{service.description}</TableCell>
-                          <TableCell>${parseFloat(service.basePrice).toFixed(2)}</TableCell>
-                          <TableCell>{service.processingTime}</TableCell>
-                          <TableCell>
-                            <Badge variant={service.isActive ? "default" : "secondary"}>
-                              {service.isActive ? "Active" : "Inactive"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right space-x-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" onClick={() => handleEdit(service)}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                              </DialogTrigger>
-                            </Dialog>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-center py-8 text-gray-500">
-                    No services configured. Add your first service to get started.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+      <div className="flex-1 p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Service Management</h1>
+          <p className="text-gray-600">Manage automotive services, pricing, and availability</p>
         </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Services</CardTitle>
+              <Wrench className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{totalActiveServices}</div>
+              <p className="text-xs text-muted-foreground">
+                Available to customers
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+              <Car className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{totalRequests}</div>
+              <p className="text-xs text-muted-foreground">
+                All time service requests
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Average Price</CardTitle>
+              <DollarSign className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600">${avgPrice.toFixed(0)}</div>
+              <p className="text-xs text-muted-foreground">
+                Across all services
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Categories</CardTitle>
+              <Settings className="h-4 w-4 text-orange-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">{categories.length}</div>
+              <p className="text-xs text-muted-foreground">
+                Service categories
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Actions & Filters */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <CardTitle>Service Catalog</CardTitle>
+              <Dialog open={showCreateService} onOpenChange={setShowCreateService}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add New Service
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Create New Service</DialogTitle>
+                    <DialogDescription>
+                      Add a new automotive service to your catalog
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="name">Service Name</Label>
+                        <Input
+                          placeholder="e.g., Brake Inspection"
+                          value={newService.name}
+                          onChange={(e) => setNewService(prev => ({ ...prev, name: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="category">Category</Label>
+                        <Select value={newService.category} onValueChange={(value) => setNewService(prev => ({ ...prev, category: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((cat) => (
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        placeholder="Detailed description of the service..."
+                        value={newService.description}
+                        onChange={(e) => setNewService(prev => ({ ...prev, description: e.target.value }))}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="basePrice">Base Price ($)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={newService.basePrice}
+                          onChange={(e) => setNewService(prev => ({ ...prev, basePrice: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="estimatedTime">Estimated Time</Label>
+                        <Input
+                          placeholder="e.g., 1-2 hours"
+                          value={newService.estimatedTime}
+                          onChange={(e) => setNewService(prev => ({ ...prev, estimatedTime: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Required Documents</Label>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <Input 
+                            placeholder="Enter document name and press Enter"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                addDocument(e.currentTarget.value);
+                                e.currentTarget.value = '';
+                              }
+                            }}
+                          />
+                          <Button 
+                            type="button" 
+                            variant="outline"
+                            onClick={(e) => {
+                              const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                              addDocument(input.value);
+                              input.value = '';
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {newService.requiredDocuments.map((doc) => (
+                            <Badge key={doc} variant="outline" className="flex items-center gap-1">
+                              {doc}
+                              <button
+                                onClick={() => removeDocument(doc)}
+                                className="ml-1 text-red-500 hover:text-red-700"
+                              >
+                                ×
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        checked={newService.isActive}
+                        onCheckedChange={(checked) => setNewService(prev => ({ ...prev, isActive: checked }))}
+                      />
+                      <Label>Active (visible to customers)</Label>
+                    </div>
+                  </div>
+
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowCreateService(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={createService}>
+                      Create Service
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search services by name, description, or category..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-full lg:w-48">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full lg:w-48">
+                  <Settings className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Services Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Services ({filteredServices.length})</CardTitle>
+            <CardDescription>
+              Manage your automotive service offerings
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Service</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Pricing</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Performance</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredServices.map((service) => (
+                  <TableRow key={service.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{service.name}</p>
+                        <p className="text-sm text-gray-500 max-w-xs truncate">
+                          {service.description}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Created: {formatDate(service.createdAt)}
+                        </p>
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <Badge variant="outline">{service.category}</Badge>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div>
+                        <p className="text-lg font-bold text-green-600">
+                          ${service.basePrice.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-gray-500">Base price</p>
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm">{service.estimatedTime}</span>
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <Badge variant={service.isActive ? "default" : "destructive"}>
+                        {service.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="text-sm space-y-1">
+                        <p>Requests: {service.totalRequests}</p>
+                        <p>Rating: ⭐ {service.avgRating.toFixed(1)}</p>
+                        <p>Documents: {service.requiredDocuments.length}</p>
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setSelectedService(service)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>Service Details - {selectedService?.name}</DialogTitle>
+                              <DialogDescription>
+                                Complete information about this automotive service
+                              </DialogDescription>
+                            </DialogHeader>
+                            
+                            {selectedService && (
+                              <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div>
+                                    <h4 className="font-semibold mb-3">Service Information</h4>
+                                    <div className="space-y-2">
+                                      <p><strong>Name:</strong> {selectedService.name}</p>
+                                      <p><strong>Category:</strong> 
+                                        <Badge className="ml-2" variant="outline">{selectedService.category}</Badge>
+                                      </p>
+                                      <p><strong>Description:</strong></p>
+                                      <p className="text-sm bg-gray-50 p-3 rounded-lg">{selectedService.description}</p>
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <h4 className="font-semibold mb-3">Pricing & Duration</h4>
+                                    <div className="space-y-2">
+                                      <p><strong>Base Price:</strong> 
+                                        <span className="text-lg font-bold text-green-600 ml-2">
+                                          ${selectedService.basePrice.toFixed(2)}
+                                        </span>
+                                      </p>
+                                      <p><strong>Estimated Time:</strong> {selectedService.estimatedTime}</p>
+                                      <p><strong>Status:</strong> 
+                                        <Badge className="ml-2" variant={selectedService.isActive ? "default" : "destructive"}>
+                                          {selectedService.isActive ? "Active" : "Inactive"}
+                                        </Badge>
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {selectedService.requiredDocuments.length > 0 && (
+                                  <div>
+                                    <h4 className="font-semibold mb-3">Required Documents</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                      {selectedService.requiredDocuments.map((doc: string, index: number) => (
+                                        <Badge key={index} variant="outline">{doc}</Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                                    <p className="text-2xl font-bold text-blue-600">{selectedService.totalRequests}</p>
+                                    <p className="text-sm text-gray-600">Total Requests</p>
+                                  </div>
+                                  <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                                    <p className="text-2xl font-bold text-yellow-600">⭐ {selectedService.avgRating.toFixed(1)}</p>
+                                    <p className="text-sm text-gray-600">Average Rating</p>
+                                  </div>
+                                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                                    <p className="text-2xl font-bold text-green-600">{formatDate(selectedService.createdAt)}</p>
+                                    <p className="text-sm text-gray-600">Created</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </DialogContent>
+                        </Dialog>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedService(service);
+                            setShowEditService(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleServiceStatus(service.id)}
+                        >
+                          {service.isActive ? "Disable" : "Enable"}
+                        </Button>
+
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteService(service.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {filteredServices.length === 0 && (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Wrench className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No services found</h3>
+              <p className="text-gray-500">
+                {searchTerm || categoryFilter !== "all" || statusFilter !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "No automotive services have been created yet"}
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

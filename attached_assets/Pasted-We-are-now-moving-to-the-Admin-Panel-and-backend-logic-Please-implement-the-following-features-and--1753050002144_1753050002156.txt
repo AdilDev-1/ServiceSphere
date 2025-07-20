@@ -1,0 +1,101 @@
+We are now moving to the Admin Panel and backend logic. Please implement the following features and ensure all user-facing components already developed are fully integrated and manageable from the admin side:
+
+🔹 1. Admin Dashboard Overview:
+
+I want you to build a fully functional Admin Panel for an automotive service website with the following features. This admin dashboard should be clean, mobile-friendly (iOS optimized), and responsive. It will serve as the backend control center for managing all client interactions, content, users, and payments. Below are the detailed feature requirements:
+
+🔐 Admin Authentication
+
+Secure login page for the admin with session management.
+
+Email/password authentication with encrypted credentials.
+
+🧾 Dashboard Overview
+
+Summary cards showing total users, submissions, pending invoices, and payments received.
+
+Quick actions (e.g., Create Invoice, Upload Image, View Submissions).
+
+📁 Submissions Panel (IMPORTANT)
+
+Dedicated “Submissions” tab in the admin panel.
+
+Display all form submissions from users (name, service selected, form data, files, date).
+
+Ability to view, respond to, download, and update submission status.
+
+Search and filter by service or user.
+
+👥 User Management
+
+View registered users.
+
+Lock/Unlock user accounts.
+
+Ban, validate, or audit user activities.
+
+View user activity logs.
+
+🧾 Invoice System
+
+Generate and send invoices to users.
+
+Mark invoices as paid or pending.
+
+Downloadable invoice PDFs.
+
+Payment tracking.
+
+🖼️ Content Management
+
+Upload, edit, delete photos or text on the front-end pages.
+
+Replace existing media and preview before updating.
+
+Manage home page banners, service content, gallery images.
+
+✉️ Notification System
+
+Send email or SMS notifications to users.
+
+Templates for service confirmations, invoice alerts, or account updates.
+
+Optional: use third-party service like SendGrid or Twilio.
+
+🗂️ Service Categories & Form Templates
+
+Create/edit/delete service categories.
+
+Manage form templates that users fill when selecting a service.
+
+🧠 CRM Integration
+
+Lightweight CRM integrated into admin panel.
+
+Worker/staff profiles to log client interactions and add internal notes.
+
+Assign tasks or reminders related to specific users.
+
+Send messages or upload files directly to a user from CRM.
+
+💳 Payment Integration
+
+Add PayPal or custom payment link support.
+
+Allow users to pay invoices or deposits.
+
+Record transactions with status and timestamps.
+
+View full payment logs per user.
+
+🛡️ Security Features
+
+Email validation for accounts.
+
+SSL support (for deployment).
+
+Admin control to audit and secure data flow.
+
+
+
+only build the front end UI now dont focus on back end for now

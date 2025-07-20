@@ -1,327 +1,672 @@
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import { useState } from "react";
 import AdminSidebar from "@/components/admin-sidebar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Download, Search, TrendingUp, DollarSign, CreditCard, Calendar } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { 
+  Search, 
+  Filter, 
+  Eye, 
+  Download, 
+  Plus,
+  DollarSign,
+  CreditCard,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  Send,
+  FileText,
+  Calendar,
+  User,
+  ExternalLink
+} from "lucide-react";
 
 export default function AdminPayments() {
-  const { toast } = useToast();
-  const { user, isAuthenticated, isLoading } = useAuth();
-
-  // Redirect if not admin
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || user?.role !== "admin")) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to access this area.",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, user, isLoading, toast]);
-
-  const { data: payments, isLoading: paymentsLoading, error } = useQuery({
-    queryKey: ["/api/payments"],
-    enabled: isAuthenticated && user?.role === "admin",
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [showCreateInvoice, setShowCreateInvoice] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [newInvoice, setNewInvoice] = useState({
+    userId: "",
+    requestId: "",
+    amount: "",
+    description: "",
+    dueDate: "",
+    items: [{ description: "", amount: "" }]
   });
 
-  const { data: requests } = useQuery({
-    queryKey: ["/api/requests"],
-    enabled: isAuthenticated && user?.role === "admin",
-  });
-
-  if (!isAuthenticated || isLoading || user?.role !== "admin") {
-    return null;
-  }
-
-  if (error && isUnauthorizedError(error)) {
-    return null;
-  }
-
-  // Mock payment data for demonstration
-  const mockPayments = [
+  // Mock data - replace with real API calls later
+  const paymentsAndInvoices = [
     {
       id: 1,
+      type: "payment",
+      invoiceNumber: "INV-2024-001",
       paymentId: "PAY-2024-001",
+      user: { name: "John Smith", email: "john@email.com" },
       requestId: "REQ-2024-001",
-      userId: "1",
-      amount: "255.00",
-      paymentMethod: "credit_card",
-      paymentStatus: "completed",
-      transactionId: "txn_abc123",
-      processedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
+      service: "Brake Inspection",
+      amount: 150.00,
+      status: "paid",
+      paymentMethod: "PayPal",
+      transactionId: "TXN-123456789",
+      createdDate: "2024-01-15",
+      paidDate: "2024-01-16",
+      dueDate: "2024-01-25",
+      description: "Brake system inspection and minor repairs"
     },
     {
       id: 2,
-      paymentId: "PAY-2024-002",
-      requestId: "REQ-2024-002",
-      userId: "2",
-      amount: "150.00",
-      paymentMethod: "paypal",
-      paymentStatus: "pending",
+      type: "invoice",
+      invoiceNumber: "INV-2024-002",
+      paymentId: null,
+      user: { name: "Sarah Johnson", email: "sarah@email.com" },
+      requestId: "REQ-2024-002", 
+      service: "Oil Change",
+      amount: 75.00,
+      status: "pending",
+      paymentMethod: null,
       transactionId: null,
-      processedAt: null,
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      createdDate: "2024-01-16",
+      paidDate: null,
+      dueDate: "2024-01-26",
+      description: "Standard oil change service with filter replacement"
     },
+    {
+      id: 3,
+      type: "payment",
+      invoiceNumber: "INV-2024-003",
+      paymentId: "PAY-2024-003",
+      user: { name: "Robert Wilson", email: "robert@email.com" },
+      requestId: "REQ-2024-003",
+      service: "Transmission Repair",
+      amount: 2500.00,
+      status: "paid",
+      paymentMethod: "Credit Card",
+      transactionId: "TXN-987654321",
+      createdDate: "2024-01-12",
+      paidDate: "2024-01-18",
+      dueDate: "2024-01-22",
+      description: "Complete transmission rebuild and replacement of worn components"
+    },
+    {
+      id: 4,
+      type: "invoice",
+      invoiceNumber: "INV-2024-004",
+      paymentId: null,
+      user: { name: "Emily Davis", email: "emily@email.com" },
+      requestId: "REQ-2024-004",
+      service: "Engine Diagnostic",
+      amount: 125.00,
+      status: "overdue",
+      paymentMethod: null,
+      transactionId: null,
+      createdDate: "2024-01-08",
+      paidDate: null,
+      dueDate: "2024-01-18",
+      description: "Comprehensive engine diagnostic and performance analysis"
+    }
   ];
 
-  const allPayments = payments && payments.length > 0 ? payments : mockPayments;
-
-  const totalRevenue = allPayments.reduce((sum, payment) => 
-    sum + (payment.paymentStatus === "completed" ? parseFloat(payment.amount) : 0), 0
-  );
-
-  const completedPayments = allPayments.filter(p => p.paymentStatus === "completed").length;
-  const pendingPayments = allPayments.filter(p => p.paymentStatus === "pending").length;
-
-  const getStatusBadge = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed":
-        return <Badge variant="default" className="bg-success">Completed</Badge>;
-      case "pending":
-        return <Badge variant="secondary" className="bg-warning text-warning-foreground">Pending</Badge>;
-      case "failed":
-        return <Badge variant="destructive">Failed</Badge>;
-      case "refunded":
-        return <Badge variant="secondary">Refunded</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
+      case "paid": return "bg-green-100 text-green-800";
+      case "pending": return "bg-orange-100 text-orange-800";
+      case "overdue": return "bg-red-100 text-red-800";
+      case "cancelled": return "bg-gray-100 text-gray-800";
+      default: return "bg-gray-100 text-gray-800";
     }
   };
 
-  const getPaymentMethodIcon = (method: string) => {
-    switch (method) {
-      case "credit_card":
-        return <CreditCard className="w-4 h-4" />;
-      case "paypal":
-        return <span className="text-xs font-bold">PP</span>;
-      case "bank_transfer":
-        return <span className="text-xs font-bold">BT</span>;
-      default:
-        return <CreditCard className="w-4 h-4" />;
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "paid": return <CheckCircle className="h-4 w-4" />;
+      case "pending": return <Clock className="h-4 w-4" />;
+      case "overdue": return <AlertTriangle className="h-4 w-4" />;
+      case "cancelled": return <AlertTriangle className="h-4 w-4" />;
+      default: return <Clock className="h-4 w-4" />;
     }
   };
 
-  const handleExportCSV = () => {
-    const csvContent = [
-      ["Payment ID", "Request ID", "Amount", "Payment Method", "Status", "Date"].join(","),
-      ...allPayments.map(payment => [
-        payment.paymentId,
-        payment.requestId,
-        payment.amount,
-        payment.paymentMethod,
-        payment.paymentStatus,
-        new Date(payment.createdAt).toLocaleDateString()
-      ].join(","))
-    ].join("\n");
+  const filteredData = paymentsAndInvoices.filter(item => {
+    const matchesSearch = 
+      item.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.service.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+    const matchesType = typeFilter === "all" || item.type === typeFilter;
+    
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `payments-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+  const totalRevenue = paymentsAndInvoices
+    .filter(item => item.status === "paid")
+    .reduce((sum, item) => sum + item.amount, 0);
 
-    toast({
-      title: "Success",
-      description: "Payment report exported successfully",
+  const pendingAmount = paymentsAndInvoices
+    .filter(item => item.status === "pending")
+    .reduce((sum, item) => sum + item.amount, 0);
+
+  const overdueAmount = paymentsAndInvoices
+    .filter(item => item.status === "overdue")
+    .reduce((sum, item) => sum + item.amount, 0);
+
+  const createInvoice = () => {
+    // API call would go here
+    console.log("Creating invoice:", newInvoice);
+    setShowCreateInvoice(false);
+    setNewInvoice({
+      userId: "",
+      requestId: "",
+      amount: "",
+      description: "",
+      dueDate: "",
+      items: [{ description: "", amount: "" }]
     });
   };
 
+  const sendInvoice = (invoiceId: number) => {
+    // API call would go here
+    console.log(`Sending invoice ${invoiceId}`);
+  };
+
+  const markAsPaid = (invoiceId: number) => {
+    // API call would go here
+    console.log(`Marking invoice ${invoiceId} as paid`);
+  };
+
+  const downloadInvoice = (invoiceId: number) => {
+    // API call would go here
+    console.log(`Downloading invoice ${invoiceId}`);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const addInvoiceItem = () => {
+    setNewInvoice(prev => ({
+      ...prev,
+      items: [...prev.items, { description: "", amount: "" }]
+    }));
+  };
+
+  const updateInvoiceItem = (index: number, field: string, value: string) => {
+    setNewInvoice(prev => ({
+      ...prev,
+      items: prev.items.map((item, i) => 
+        i === index ? { ...item, [field]: value } : item
+      )
+    }));
+  };
+
+  const removeInvoiceItem = (index: number) => {
+    if (newInvoice.items.length > 1) {
+      setNewInvoice(prev => ({
+        ...prev,
+        items: prev.items.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />
-      
-      <div className="flex-1 overflow-auto">
-        <div className="min-h-screen bg-gray-50 py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                      <p className="text-3xl font-bold text-success">${totalRevenue.toFixed(2)}</p>
-                    </div>
-                    <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center">
-                      <DollarSign className="w-6 h-6 text-success" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Completed Payments</p>
-                      <p className="text-3xl font-bold text-primary">{completedPayments}</p>
-                    </div>
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <CreditCard className="w-6 h-6 text-primary" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Pending Payments</p>
-                      <p className="text-3xl font-bold text-warning">{pendingPayments}</p>
-                    </div>
-                    <div className="w-12 h-12 bg-warning/10 rounded-full flex items-center justify-center">
-                      <Calendar className="w-6 h-6 text-warning" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">This Month</p>
-                      <p className="text-3xl font-bold text-gray-900">${totalRevenue.toFixed(2)}</p>
-                      <p className="text-sm text-success">+12% from last month</p>
-                    </div>
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-gray-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Payments Table */}
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <CardTitle>Payment History</CardTitle>
-                    <p className="text-gray-600 mt-1">View and manage all payment transactions</p>
-                  </div>
-                  <div className="mt-4 md:mt-0 flex flex-col sm:flex-row gap-3">
-                    <Select>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="All Statuses" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="failed">Failed</SelectItem>
-                        <SelectItem value="refunded">Refunded</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <div className="relative">
-                      <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-                      <Input placeholder="Search payments..." className="pl-10 w-64" />
-                    </div>
-                    <Button onClick={handleExportCSV}>
-                      <Download className="w-4 h-4 mr-2" />
-                      Export CSV
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                {paymentsLoading ? (
-                  <p>Loading...</p>
-                ) : allPayments && allPayments.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Payment ID</TableHead>
-                        <TableHead>Request ID</TableHead>
-                        <TableHead>User</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Payment Method</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Transaction ID</TableHead>
-                        <TableHead>Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {allPayments.map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell className="font-medium text-primary">
-                            {payment.paymentId}
-                          </TableCell>
-                          <TableCell>{payment.requestId}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center">
-                              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">
-                                <span className="text-xs font-medium">
-                                  U{payment.userId}
-                                </span>
-                              </div>
-                              <span>User {payment.userId}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            ${parseFloat(payment.amount).toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              {getPaymentMethodIcon(payment.paymentMethod)}
-                              <span className="capitalize">
-                                {payment.paymentMethod.replace('_', ' ')}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(payment.paymentStatus)}
-                          </TableCell>
-                          <TableCell className="font-mono text-sm">
-                            {payment.transactionId || "—"}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(payment.createdAt).toLocaleDateString()}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-center py-8 text-gray-500">No payments found</p>
-                )}
-
-                {/* Pagination */}
-                {allPayments && allPayments.length > 0 && (
-                  <div className="flex items-center justify-between mt-6 pt-4 border-t bg-gray-50 px-4 py-3">
-                    <div className="text-sm text-gray-500">
-                      Showing 1 to {allPayments.length} of {allPayments.length} results
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" disabled>Previous</Button>
-                      <Button variant="default" size="sm">1</Button>
-                      <Button variant="outline" size="sm" disabled>Next</Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+      <div className="flex-1 p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Payments & Invoices</h1>
+          <p className="text-gray-600">Manage invoicing, track payments, and monitor revenue</p>
         </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">${totalRevenue.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">
+                From completed payments
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
+              <Clock className="h-4 w-4 text-orange-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">${pendingAmount.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">
+                Awaiting payment
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Overdue Amount</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">${overdueAmount.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">
+                Past due date
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">This Month</CardTitle>
+              <Calendar className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{paymentsAndInvoices.length}</div>
+              <p className="text-xs text-muted-foreground">
+                Total transactions
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Actions & Filters */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <CardTitle>Payment Management</CardTitle>
+              <Dialog open={showCreateInvoice} onOpenChange={setShowCreateInvoice}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Create Invoice
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Create New Invoice</DialogTitle>
+                    <DialogDescription>
+                      Generate an invoice for a service request
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="userId">Customer</Label>
+                        <Select value={newInvoice.userId} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, userId: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select customer" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">John Smith</SelectItem>
+                            <SelectItem value="2">Sarah Johnson</SelectItem>
+                            <SelectItem value="3">Robert Wilson</SelectItem>
+                            <SelectItem value="4">Emily Davis</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="requestId">Service Request</Label>
+                        <Select value={newInvoice.requestId} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, requestId: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select request" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="REQ-2024-001">REQ-2024-001 - Brake Inspection</SelectItem>
+                            <SelectItem value="REQ-2024-002">REQ-2024-002 - Oil Change</SelectItem>
+                            <SelectItem value="REQ-2024-003">REQ-2024-003 - Transmission Repair</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="description">Service Description</Label>
+                      <Textarea
+                        placeholder="Describe the services provided..."
+                        value={newInvoice.description}
+                        onChange={(e) => setNewInvoice(prev => ({ ...prev, description: e.target.value }))}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="dueDate">Due Date</Label>
+                      <Input
+                        type="date"
+                        value={newInvoice.dueDate}
+                        onChange={(e) => setNewInvoice(prev => ({ ...prev, dueDate: e.target.value }))}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-3">
+                        <Label>Invoice Items</Label>
+                        <Button type="button" variant="outline" size="sm" onClick={addInvoiceItem}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Item
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {newInvoice.items.map((item, index) => (
+                          <div key={index} className="flex gap-3 items-end">
+                            <div className="flex-1">
+                              <Input
+                                placeholder="Item description"
+                                value={item.description}
+                                onChange={(e) => updateInvoiceItem(index, "description", e.target.value)}
+                              />
+                            </div>
+                            <div className="w-32">
+                              <Input
+                                type="number"
+                                placeholder="Amount"
+                                value={item.amount}
+                                onChange={(e) => updateInvoiceItem(index, "amount", e.target.value)}
+                              />
+                            </div>
+                            {newInvoice.items.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeInvoiceItem(index)}
+                              >
+                                Remove
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-lg font-semibold">
+                        Total: ${newInvoice.items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowCreateInvoice(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={createInvoice}>
+                      Create Invoice
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by customer, invoice number, or service..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full lg:w-48">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-full lg:w-48">
+                  <FileText className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="invoice">Invoices</SelectItem>
+                  <SelectItem value="payment">Payments</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Payments & Invoices Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Transactions ({filteredData.length})</CardTitle>
+            <CardDescription>
+              Track all invoices and payments
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice/Payment</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Service</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Dates</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredData.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{item.invoiceNumber}</p>
+                        {item.paymentId && (
+                          <p className="text-sm text-gray-500">{item.paymentId}</p>
+                        )}
+                        <Badge variant="outline" className="mt-1">
+                          {item.type}
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{item.user.name}</p>
+                        <p className="text-sm text-gray-500">{item.user.email}</p>
+                        <p className="text-sm text-gray-500">{item.requestId}</p>
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <p className="font-medium">{item.service}</p>
+                      <p className="text-sm text-gray-500 max-w-xs truncate">
+                        {item.description}
+                      </p>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <p className="text-lg font-bold">${item.amount.toLocaleString()}</p>
+                      {item.paymentMethod && (
+                        <p className="text-sm text-gray-500">{item.paymentMethod}</p>
+                      )}
+                    </TableCell>
+                    
+                    <TableCell>
+                      <Badge className={getStatusColor(item.status)}>
+                        {getStatusIcon(item.status)}
+                        <span className="ml-1 capitalize">{item.status}</span>
+                      </Badge>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="text-sm">
+                        <p>Created: {formatDate(item.createdDate)}</p>
+                        <p>Due: {formatDate(item.dueDate)}</p>
+                        {item.paidDate && (
+                          <p className="text-green-600">Paid: {formatDate(item.paidDate)}</p>
+                        )}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="flex flex-col gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setSelectedPayment(item)}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>{selectedPayment?.type === "payment" ? "Payment" : "Invoice"} Details</DialogTitle>
+                              <DialogDescription>
+                                {selectedPayment?.invoiceNumber} - {selectedPayment?.user.name}
+                              </DialogDescription>
+                            </DialogHeader>
+                            
+                            {selectedPayment && (
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <h4 className="font-semibold mb-2">Customer Information</h4>
+                                    <p><strong>Name:</strong> {selectedPayment.user.name}</p>
+                                    <p><strong>Email:</strong> {selectedPayment.user.email}</p>
+                                    <p><strong>Request:</strong> {selectedPayment.requestId}</p>
+                                  </div>
+                                  <div>
+                                    <h4 className="font-semibold mb-2">Payment Information</h4>
+                                    <p><strong>Amount:</strong> ${selectedPayment.amount.toLocaleString()}</p>
+                                    <p><strong>Status:</strong> 
+                                      <Badge className={`ml-2 ${getStatusColor(selectedPayment.status)}`}>
+                                        {selectedPayment.status}
+                                      </Badge>
+                                    </p>
+                                    {selectedPayment.paymentMethod && (
+                                      <p><strong>Method:</strong> {selectedPayment.paymentMethod}</p>
+                                    )}
+                                    {selectedPayment.transactionId && (
+                                      <p><strong>Transaction:</strong> {selectedPayment.transactionId}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <h4 className="font-semibold mb-2">Service Details</h4>
+                                  <p><strong>Service:</strong> {selectedPayment.service}</p>
+                                  <p><strong>Description:</strong> {selectedPayment.description}</p>
+                                </div>
+                                
+                                <div className="grid grid-cols-3 gap-4 text-sm">
+                                  <div>
+                                    <p><strong>Created:</strong></p>
+                                    <p>{formatDate(selectedPayment.createdDate)}</p>
+                                  </div>
+                                  <div>
+                                    <p><strong>Due Date:</strong></p>
+                                    <p>{formatDate(selectedPayment.dueDate)}</p>
+                                  </div>
+                                  {selectedPayment.paidDate && (
+                                    <div>
+                                      <p><strong>Paid Date:</strong></p>
+                                      <p className="text-green-600">{formatDate(selectedPayment.paidDate)}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </DialogContent>
+                        </Dialog>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadInvoice(item.id)}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          PDF
+                        </Button>
+
+                        {item.status === "pending" && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => sendInvoice(item.id)}
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              Send
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => markAsPaid(item.id)}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Mark Paid
+                            </Button>
+                          </>
+                        )}
+
+                        {item.status === "paid" && item.transactionId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/admin/transaction/${item.transactionId}`, '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Transaction
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {filteredData.length === 0 && (
+          <Card>
+            <CardContent className="text-center py-12">
+              <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No transactions found</h3>
+              <p className="text-gray-500">
+                {searchTerm || statusFilter !== "all" || typeFilter !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "No payments or invoices have been created yet"}
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

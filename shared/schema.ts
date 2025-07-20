@@ -280,9 +280,9 @@ export const insertMessageSchema = createInsertSchema(messages).omit({ id: true,
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
 export const insertContentPageSchema = createInsertSchema(contentPages).omit({ id: true, createdAt: true, updatedAt: true });
 
-// Auth schemas
+// Auth schemas  
 export const registerUserSchema = insertUserSchema.extend({
-  confirmPassword: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],

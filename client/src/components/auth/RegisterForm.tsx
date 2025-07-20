@@ -35,10 +35,7 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterUser) => {
-      return apiRequest("/api/auth/register", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return apiRequest("POST", "/api/auth/register", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });

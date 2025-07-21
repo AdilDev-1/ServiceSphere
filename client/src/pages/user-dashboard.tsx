@@ -48,7 +48,7 @@ export default function UserDashboard() {
       <UserSidebar />
       
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto ml-64">
         <div className="p-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Welcome back!</h1>

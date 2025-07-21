@@ -27,7 +27,7 @@ export default function UserSidebar() {
   };
 
   return (
-    <div className="w-64 bg-white shadow-lg">
+    <div className="w-64 bg-white shadow-lg min-h-screen fixed left-0 top-0 overflow-y-auto">
       <div className="p-6 border-b">
         <h2 className="text-xl font-bold text-gray-900">ServiceFlow</h2>
         <p className="text-sm text-gray-500">User Portal</p>
@@ -39,14 +39,14 @@ export default function UserSidebar() {
           
           return (
             <Link key={item.href} href={item.href}>
-              <a className={`flex items-center px-6 py-3 transition-colors ${
+              <div className={`flex items-center px-6 py-3 transition-colors cursor-pointer ${
                 isActive
                   ? "text-primary bg-blue-50 border-r-2 border-primary"
                   : "text-gray-600 hover:bg-gray-50"
               }`}>
                 <Icon className="w-5 h-5 mr-3" />
                 {item.label}
-              </a>
+              </div>
             </Link>
           );
         })}

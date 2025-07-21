@@ -40,7 +40,7 @@ export default function AdminSidebar() {
   };
 
   return (
-    <div className="w-64 bg-gray-900 text-white min-h-screen">
+    <div className="w-64 bg-gray-900 text-white min-h-screen fixed left-0 top-0 overflow-y-auto">
       <div className="p-6 border-b border-gray-700">
         <h2 className="text-xl font-bold text-white">AutoService Pro</h2>
         <p className="text-sm text-gray-300">Admin Panel</p>

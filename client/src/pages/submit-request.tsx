@@ -132,7 +132,7 @@ export default function SubmitRequest() {
     <div className="flex h-screen bg-gray-50">
       <UserSidebar />
       
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto ml-64">
         <div className="min-h-screen bg-gray-50 py-8">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Progress Indicator */}

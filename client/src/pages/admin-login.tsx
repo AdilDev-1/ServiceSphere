@@ -28,8 +28,21 @@ export default function AdminLoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginUser) => {
-      const response = await apiRequest("POST", "/api/auth/admin-login", data);
-      return response;
+      const response = await fetch("/api/auth/admin-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Admin login failed");
+      }
+      
+      return response.json();
     },
     onSuccess: (userData) => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -73,6 +86,12 @@ export default function AdminLoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Demo Credentials */}
+            <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-4">
+              <p className="text-xs font-medium text-red-300 mb-2">Admin Demo Credentials:</p>
+              <p className="text-xs text-red-200">Email: john@gmail.com</p>
+              <p className="text-xs text-red-200">Password: admin123</p>
+            </div>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-gray-300">

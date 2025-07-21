@@ -1,4 +1,6 @@
 import AdminSidebar from "@/components/admin-sidebar";
+import MobileHeader from "@/components/mobile-header";
+import { useMobileMenu } from "@/hooks/useMobileMenu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -17,6 +19,7 @@ import {
 } from "lucide-react";
 
 export default function AdminDashboard() {
+  const { isMobileMenuOpen, isMobile, toggleMobileMenu, closeMobileMenu } = useMobileMenu();
   // Mock data - replace with real API calls later
   const stats = {
     totalUsers: 156,
@@ -45,8 +48,17 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar />
-      <div className="flex-1 p-8 ml-64">
+      <AdminSidebar isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
+      
+      <MobileHeader 
+        title="Admin Dashboard"
+        subtitle="Manage your automotive service platform"
+        isMobileMenuOpen={isMobileMenuOpen}
+        onToggleMobileMenu={toggleMobileMenu}
+        variant="admin"
+      />
+      
+      <div className={`flex-1 p-4 lg:p-8 ${isMobile ? 'pt-20' : 'ml-64'} transition-all duration-300`}>
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
@@ -54,7 +66,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -109,7 +121,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Request Status Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <Card>
             <CardHeader>
               <CardTitle>Request Status Overview</CardTitle>

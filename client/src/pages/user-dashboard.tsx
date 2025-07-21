@@ -4,11 +4,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import UserSidebar from "@/components/user-sidebar";
+import MobileHeader from "@/components/mobile-header";
+import { useMobileMenu } from "@/hooks/useMobileMenu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, CheckCircle, DollarSign } from "lucide-react";
 import StatusBadge from "@/components/status-badge";
 
 export default function UserDashboard() {
+  const { isMobileMenuOpen, isMobile, toggleMobileMenu, closeMobileMenu } = useMobileMenu();
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -45,18 +48,26 @@ export default function UserDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <UserSidebar />
+      <UserSidebar isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
+      
+      <MobileHeader 
+        title="Dashboard"
+        subtitle="Welcome to AutoService Pro"
+        isMobileMenuOpen={isMobileMenuOpen}
+        onToggleMobileMenu={toggleMobileMenu}
+        variant="user"
+      />
       
       {/* Main Content */}
-      <div className="flex-1 overflow-auto ml-64">
-        <div className="p-8">
+      <div className={`flex-1 overflow-auto ${isMobile ? 'pt-20' : 'ml-64'} transition-all duration-300`}>
+        <div className="p-4 lg:p-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Welcome back!</h1>
             <p className="text-gray-600">Here's an overview of your service requests and account status.</p>
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6 lg:mb-8">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">

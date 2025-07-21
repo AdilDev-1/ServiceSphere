@@ -7,6 +7,7 @@ AutoService Pro is a comprehensive automotive service management web application
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (July 2025)
 

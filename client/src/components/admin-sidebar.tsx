@@ -27,8 +27,16 @@ const menuItems = [
 export default function AdminSidebar() {
   const [location] = useLocation();
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      // Redirect to landing page after successful logout
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback redirect even if logout fails
+      window.location.href = '/';
+    }
   };
 
   return (

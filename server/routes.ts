@@ -163,6 +163,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET route for direct logout redirect
+  app.get('/api/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      // Redirect to landing page after logout
+      res.redirect('/');
+    });
+  });
+
+  // POST route for programmatic logout
   app.post('/api/auth/logout', (req, res) => {
     req.session.destroy((err) => {
       if (err) {

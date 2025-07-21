@@ -44,14 +44,14 @@ export default function AdminSidebar() {
           
           return (
             <Link key={item.href} href={item.href}>
-              <a className={`flex items-center px-6 py-3 transition-colors ${
+              <div className={`flex items-center px-6 py-3 transition-colors cursor-pointer ${
                 isActive
                   ? "text-blue-400 bg-gray-800 border-r-2 border-blue-400"
                   : "text-gray-300 hover:bg-gray-800 hover:text-white"
               }`}>
                 <Icon className="w-5 h-5 mr-3" />
                 {item.label}
-              </a>
+              </div>
             </Link>
           );
         })}

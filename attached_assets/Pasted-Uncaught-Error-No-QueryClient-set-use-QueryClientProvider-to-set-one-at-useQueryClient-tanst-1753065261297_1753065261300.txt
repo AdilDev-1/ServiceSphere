@@ -1,0 +1,66 @@
+Uncaught Error: No QueryClient set, use QueryClientProvider to set one
+    at useQueryClient (@tanstack_react-query.js?v=6db6b67a:2800:11)
+    at useBaseQuery (@tanstack_react-query.js?v=6db6b67a:2999:18)
+    at useQuery (@tanstack_react-query.js?v=6db6b67a:3068:10)
+    at useAuth (useAuth.ts:6:44)
+    at Profile (profile.tsx:14:48)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=6db6b67a:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=6db6b67a:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=6db6b67a:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=6db6b67a:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=6db6b67a:3699:24)
+useQueryClient @ @tanstack_react-query.js?v=6db6b67a:2800
+useBaseQuery @ @tanstack_react-query.js?v=6db6b67a:2999
+useQuery @ @tanstack_react-query.js?v=6db6b67a:3068
+useAuth @ useAuth.ts:6
+Profile @ profile.tsx:14
+renderWithHooks @ chunk-RPCDYKBN.js?v=6db6b67a:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=6db6b67a:14926
+beginWork @ chunk-RPCDYKBN.js?v=6db6b67a:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=6db6b67a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=6db6b67a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=6db6b67a:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=6db6b67a:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=6db6b67a:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=6db6b67a:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=6db6b67a:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=6db6b67a:18736
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=6db6b67a:18879
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=6db6b67a:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=6db6b67a:18627Understand this error
+chunk-RPCDYKBN.js?v=6db6b67a:14032 The above error occurred in the <Profile> component:
+
+    at Profile (https://077eabc8-9423-4211-b9bc-432a7359ba3b-00-2iuek7e6d9q4q.janeway.replit.dev/src/pages/profile.tsx:30:21)
+    at Route (https://077eabc8-9423-4211-b9bc-432a7359ba3b-00-2iuek7e6d9q4q.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=6db6b67a:323:16)
+    at Switch (https://077eabc8-9423-4211-b9bc-432a7359ba3b-00-2iuek7e6d9q4q.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=6db6b67a:379:17)
+    at Router (https://077eabc8-9423-4211-b9bc-432a7359ba3b-00-2iuek7e6d9q4q.janeway.replit.dev/src/App.tsx?v=ORIZs8JFc7LEKCGHLyVK:43:48)
+    at Provider (https://077eabc8-9423-4211-b9bc-432a7359ba3b-00-2iuek7e6d9q4q.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-E7IAXTU4.js?v=6db6b67a:38:15)
+    at TooltipProvider (https://077eabc8-9423-4211-b9bc-432a7359ba3b-00-2iuek7e6d9q4q.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=6db6b67a:61:5)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-RPCDYKBN.js?v=6db6b67a:14032
+update.callback @ chunk-RPCDYKBN.js?v=6db6b67a:14052
+callCallback @ chunk-RPCDYKBN.js?v=6db6b67a:11248
+commitUpdateQueue @ chunk-RPCDYKBN.js?v=6db6b67a:11265
+commitLayoutEffectOnFiber @ chunk-RPCDYKBN.js?v=6db6b67a:17093
+commitLayoutMountEffects_complete @ chunk-RPCDYKBN.js?v=6db6b67a:17980
+commitLayoutEffects_begin @ chunk-RPCDYKBN.js?v=6db6b67a:17969
+commitLayoutEffects @ chunk-RPCDYKBN.js?v=6db6b67a:17920
+commitRootImpl @ chunk-RPCDYKBN.js?v=6db6b67a:19353
+commitRoot @ chunk-RPCDYKBN.js?v=6db6b67a:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=6db6b67a:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=6db6b67a:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=6db6b67a:18627Understand this error
+chunk-RPCDYKBN.js?v=6db6b67a:9129 Uncaught Error: No QueryClient set, use QueryClientProvider to set one
+    at useQueryClient (@tanstack_react-query.js?v=6db6b67a:2800:11)
+    at useBaseQuery (@tanstack_react-query.js?v=6db6b67a:2999:18)
+    at useQuery (@tanstack_react-query.js?v=6db6b67a:3068:10)
+    at useAuth (useAuth.ts:6:44)
+    at Profile (profile.tsx:14:48)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=6db6b67a:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=6db6b67a:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=6db6b67a:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=6db6b67a:19753:22)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=6db6b67a:19198:20)

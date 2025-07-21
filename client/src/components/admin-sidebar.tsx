@@ -52,7 +52,7 @@ export default function AdminSidebar({ isOpen = true, onClose }: AdminSidebarPro
       {/* Mobile overlay */}
       {isMobile && isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden transition-opacity duration-300"
           onClick={onClose}
         />
       )}

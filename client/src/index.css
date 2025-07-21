@@ -167,6 +167,29 @@ button,
   min-height: 44px;
 }
 
+/* Mobile sidebar animations */
+@media (max-width: 1023px) {
+  .mobile-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .mobile-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .mobile-overlay {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none;
+  }
+  
+  .mobile-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
 /* Smooth scrolling for mobile */
 html {
   scroll-behavior: smooth;

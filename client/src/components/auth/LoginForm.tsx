@@ -42,7 +42,13 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
       });
       // Navigate to appropriate dashboard based on user role
       if (userData.role === "admin") {
-        navigate("/admin");
+        // Admin users should use admin login, redirect them there
+        toast({
+          title: "Admin Account Detected",
+          description: "Redirecting to admin login for enhanced security.",
+          variant: "destructive",
+        });
+        navigate("/admin-login");
       } else {
         navigate("/dashboard");
       }

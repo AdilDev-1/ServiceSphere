@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { loginUserSchema, type LoginUser } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { login } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +17,8 @@ interface LoginFormProps {
 
 export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [, navigate] = useLocation();
 
   const form = useForm<LoginUser>({
@@ -30,54 +29,46 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
     },
   });
 
-  const loginMutation = useMutation({
-    mutationFn: async (data: LoginUser) => {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-        credentials: 'include'
-      });
+  const onSubmit = async (data: LoginUser) => {
+    setIsLoading(true);
+    
+    try {
+      const result = login(data.email, data.password);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Login failed");
-      }
-      
-      return response.json();
-    },
-    onSuccess: (userData: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully signed in to AutoService Pro.",
-      });
-      // Navigate to appropriate dashboard based on user role
-      if (userData.role === "admin") {
-        // Admin users should use admin login, redirect them there
+      if (result.success && result.user) {
         toast({
-          title: "Admin Account Detected",
-          description: "Redirecting to admin login for enhanced security.",
+          title: "Welcome back!",
+          description: "You've successfully signed in to AutoService Pro.",
+        });
+        
+        // Navigate to appropriate dashboard based on user role
+        if (result.user.role === "admin") {
+          // Admin users should use admin login, redirect them there
+          toast({
+            title: "Admin Account Detected",
+            description: "Redirecting to admin login for enhanced security.",
+            variant: "destructive",
+          });
+          navigate("/admin-login");
+        } else {
+          navigate("/dashboard");
+        }
+      } else {
+        toast({
+          title: "Sign in failed",
+          description: result.error || "Please check your credentials and try again.",
           variant: "destructive",
         });
-        navigate("/admin-login");
-      } else {
-        navigate("/dashboard");
       }
-    },
-    onError: (error: any) => {
+    } catch (error) {
       toast({
         title: "Sign in failed",
-        description: error.message || "Please check your credentials and try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-    },
-  });
-
-  const onSubmit = (data: LoginUser) => {
-    loginMutation.mutate(data);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -147,10 +138,10 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
           <Button
             type="submit"
-            disabled={loginMutation.isPending}
+            disabled={isLoading}
             className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors duration-200"
           >
-            {loginMutation.isPending ? "Signing In..." : "Sign In"}
+            {isLoading ? "Signing In..." : "Sign In"}
           </Button>
         </form>
 

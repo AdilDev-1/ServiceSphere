@@ -35,21 +35,12 @@ export default function AdminSidebar({ isOpen = true, onClose }: AdminSidebarPro
   const [location] = useLocation();
   const { isMobile } = useMobileMenu();
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { 
-        method: 'POST',
-        credentials: 'include'
-      });
-      // Clear any local storage if needed
-      localStorage.clear();
-      // Redirect to landing page after successful logout
+  const handleLogout = () => {
+    // Use client-side logout
+    import('@/lib/auth').then(({ logout }) => {
+      logout();
       window.location.href = '/';
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Fallback redirect even if logout fails
-      window.location.href = '/';
-    }
+    });
   };
 
   return (

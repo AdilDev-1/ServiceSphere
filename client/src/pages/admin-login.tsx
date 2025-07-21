@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { loginUserSchema, type LoginUser } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { adminLogin } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,8 +13,8 @@ import { Eye, EyeOff, Shield, Mail, Lock } from "lucide-react";
 
 export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [, navigate] = useLocation();
 
   const form = useForm<LoginUser>({
@@ -26,44 +25,35 @@ export default function AdminLoginPage() {
     },
   });
 
-  const loginMutation = useMutation({
-    mutationFn: async (data: LoginUser) => {
-      const response = await fetch("/api/auth/admin-login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-        credentials: 'include'
-      });
+  const onSubmit = async (data: LoginUser) => {
+    setIsLoading(true);
+    
+    try {
+      const result = adminLogin(data.email, data.password);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Admin login failed");
+      if (result.success && result.user) {
+        toast({
+          title: "Admin Access Granted",
+          description: "Welcome to the Admin Panel.",
+        });
+        // Always navigate to admin panel after successful admin login
+        navigate("/admin");
+      } else {
+        toast({
+          title: "Admin Login Failed",
+          description: result.error || "Invalid admin credentials. Please try again.",
+          variant: "destructive",
+        });
       }
-      
-      return response.json();
-    },
-    onSuccess: (userData) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({
-        title: "Admin Access Granted",
-        description: "Welcome to the Admin Panel.",
-      });
-      // Always navigate to admin panel after successful admin login
-      navigate("/admin");
-    },
-    onError: (error: any) => {
+    } catch (error) {
       toast({
         title: "Admin Login Failed",
-        description: error.message || "Invalid admin credentials. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-    },
-  });
-
-  const onSubmit = (data: LoginUser) => {
-    loginMutation.mutate(data);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -140,10 +130,10 @@ export default function AdminLoginPage() {
 
               <Button
                 type="submit"
-                disabled={loginMutation.isPending}
+                disabled={isLoading}
                 className="w-full py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg"
               >
-                {loginMutation.isPending ? "Verifying Access..." : "Access Admin Panel"}
+                {isLoading ? "Verifying Access..." : "Access Admin Panel"}
               </Button>
             </form>
 

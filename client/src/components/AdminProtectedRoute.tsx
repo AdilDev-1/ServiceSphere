@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthClient } from "@/hooks/useAuthClient";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
@@ -8,7 +8,7 @@ interface AdminProtectedRouteProps {
 }
 
 export function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuthClient();
   const [, navigate] = useLocation();
   const { toast } = useToast();
 

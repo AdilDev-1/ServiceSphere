@@ -55,6 +55,8 @@ export const mockPayments: any[] = [];
 export const mockMessages: any[] = [];
 export const mockDocuments: any[] = [];
 
+let nextRequestId = 1;
+
 // Function to get mock data
 export function getServiceTypes() {
   return mockServiceTypes;
@@ -103,4 +105,21 @@ export function getDocuments(userId?: string) {
     return mockDocuments.filter(doc => doc.userId === userId);
   }
   return mockDocuments;
+}
+
+export function getUserPayments(userId: string) {
+  return mockPayments.filter(payment => payment.userId === userId);
+}
+
+export function createServiceRequest(data: any) {
+  const request = {
+    id: nextRequestId++,
+    ...data,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  
+  mockRequests.push(request);
+  return request;
 }

@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { registerUserSchema, type RegisterUser } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +17,8 @@ interface RegisterFormProps {
 export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [, navigate] = useLocation();
 
   const form = useForm<RegisterUser>({
@@ -35,30 +33,27 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     },
   });
 
-  const registerMutation = useMutation({
-    mutationFn: async (data: RegisterUser) => {
-      return apiRequest("POST", "/api/auth/register", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+  const onSubmit = async (data: RegisterUser) => {
+    setIsLoading(true);
+    
+    try {
+      // For now, registration is disabled in client-side mode
+      // Users need to use predefined accounts
       toast({
-        title: "Welcome to AutoService Pro!",
-        description: "Your account has been created successfully.",
-      });
-      // Navigate to dashboard after successful registration
-      navigate("/");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Registration failed",
-        description: error.message || "Please check your information and try again.",
+        title: "Registration Not Available",
+        description: "Please use the demo accounts: adil@gmail.com (user) or john@gmail.com (admin)",
         variant: "destructive",
       });
-    },
-  });
-
-  const onSubmit = (data: RegisterUser) => {
-    registerMutation.mutate(data);
+      onSwitchToLogin();
+    } catch (error) {
+      toast({
+        title: "Registration failed",
+        description: "Please check your information and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -204,10 +199,10 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
 
           <Button
             type="submit"
-            disabled={registerMutation.isPending}
+            disabled={isLoading}
             className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors duration-200"
           >
-            {registerMutation.isPending ? "Creating Account..." : "Create Account"}
+            {isLoading ? "Creating Account..." : "Create Account"}
           </Button>
         </form>
 

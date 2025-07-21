@@ -1,8 +1,7 @@
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import { useAuthClient } from "@/hooks/useAuthClient";
+import { getRequests } from "@/lib/mockData";
 import UserSidebar from "@/components/user-sidebar";
 import StatusBadge from "@/components/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,34 +13,27 @@ import { Button } from "@/components/ui/button";
 
 export default function MySubmissions() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuthClient();
 
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
         title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        description: "Please log in to view your submissions.",
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/auth";
       }, 500);
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: requests, isLoading: requestsLoading, error } = useQuery({
-    queryKey: ["/api/requests"],
-    enabled: isAuthenticated,
-  });
+  const requests = user ? getRequests(user.id) : [];
 
   if (!isAuthenticated || isLoading) {
     return null;
-  }
-
-  if (error && isUnauthorizedError(error)) {
-    return null; // useEffect will handle redirect
   }
 
   return (
@@ -78,9 +70,7 @@ export default function MySubmissions() {
 
               {/* Table */}
               <CardContent>
-                {requestsLoading ? (
-                  <p>Loading...</p>
-                ) : requests && requests.length > 0 ? (
+                {requests.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>

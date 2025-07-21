@@ -1,8 +1,7 @@
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import { useAuthClient } from "@/hooks/useAuthClient";
+import { getMessages } from "@/lib/mockData";
 import UserSidebar from "@/components/user-sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,34 +12,27 @@ import { MessageSquare, Send, Phone, Mail } from "lucide-react";
 
 export default function Support() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuthClient();
 
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
         title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        description: "Please log in to access support.",
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/auth";
       }, 500);
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: messages, isLoading: messagesLoading, error } = useQuery({
-    queryKey: ["/api/messages"],
-    enabled: isAuthenticated,
-  });
+  const messages = user ? getMessages(user.id) : [];
 
   if (!isAuthenticated || isLoading) {
     return null;
-  }
-
-  if (error && isUnauthorizedError(error)) {
-    return null; // useEffect will handle redirect
   }
 
   return (

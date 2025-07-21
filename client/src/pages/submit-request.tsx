@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import { useAuthClient } from "@/hooks/useAuthClient";
+import { getServiceTypes, createServiceRequest } from "@/lib/mockData";
 import UserSidebar from "@/components/user-sidebar";
 import RequestFormWizard from "@/components/request-form-wizard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,23 +40,22 @@ export default function SubmitRequest() {
   const [currentStep, setCurrentStep] = useState(1);
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuthClient();
 
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
         title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        description: "Please log in to submit a service request.",
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        navigate("/auth");
       }, 500);
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, toast, navigate]);
 
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
@@ -70,50 +67,39 @@ export default function SubmitRequest() {
     },
   });
 
-  const { data: serviceTypes } = useQuery({
-    queryKey: ["/api/service-types"],
-    enabled: isAuthenticated,
-  });
-
-  const createRequestMutation = useMutation({
-    mutationFn: async (data: RequestFormData) => {
-      const response = await apiRequest("POST", "/api/requests", data);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Your request has been submitted successfully!",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
-      navigate("/my-submissions");
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to submit request. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const serviceTypes = getServiceTypes();
 
   if (!isAuthenticated || isLoading) {
     return null;
   }
 
-  const onSubmit = (data: RequestFormData) => {
-    createRequestMutation.mutate(data);
+  const onSubmit = async (data: RequestFormData) => {
+    if (!user) return;
+    
+    setIsSubmitting(true);
+    try {
+      const request = createServiceRequest({
+        ...data,
+        userId: user.id,
+        userName: `${user.firstName} ${user.lastName}`,
+        userEmail: user.email,
+      });
+      
+      toast({
+        title: "Success",
+        description: "Your request has been submitted successfully!",
+      });
+      navigate("/my-submissions");
+    } catch (error) {
+      toast({
+        title: "Error", 
+        description: "Failed to submit request. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const nextStep = () => {
@@ -507,10 +493,10 @@ export default function SubmitRequest() {
                       ) : (
                         <Button 
                           type="submit" 
-                          disabled={createRequestMutation.isPending}
+                          disabled={isSubmitting}
                           className="bg-success hover:bg-green-700"
                         >
-                          {createRequestMutation.isPending ? "Submitting..." : "Submit Request"}
+                          {isSubmitting ? "Submitting..." : "Submit Request"}
                         </Button>
                       )}
                     </div>
